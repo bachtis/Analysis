@@ -54,7 +54,7 @@ class HCALShowerAnalyzer( Analyzer ):
 
         #loop on tracks and match them with clusters
         for track in event.tracks:
-            shower = ShowerFromChargedPion(track,1.0)
+            shower = ShowerFromChargedPion(track,0.5)
             for hit in event.ecalHits:
                 shower.addConstituent(hit,True)
             for hit in (event.hcalHits):

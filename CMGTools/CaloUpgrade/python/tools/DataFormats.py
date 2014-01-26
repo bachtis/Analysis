@@ -23,11 +23,15 @@ class ShowerFromChargedPion(object):
         #for visualization
         #type = 0 track 1 ECAL , 2 HCAL
 
-        self.typeO=[]
-        self.eta=[]
-        self.phi=[]
-        self.rho=[]
-        self.energy=[]
+        self.typeO=[-1,0]
+        self.eta=[self.ecalEntrance.Eta(),self.hcalEntrance.Eta()]
+        self.phi=[self.ecalEntrance.Phi(),self.hcalEntrance.Phi()]
+        self.ieta=[0,0]
+        self.iphi=[0,0]
+
+        self.rho=[self.ecalEntrance.Rho()]
+        self.energy=[self.trackMomentum]
+        self.depth=[-1]
 
 
     def vectorFromConstituent(self,cluster):
@@ -46,14 +50,16 @@ class ShowerFromChargedPion(object):
             else:    
                 self.ecalVector += vec
             self.typeO.append(1)
-
+            self.depth.append(0)
             self.eta.append(constituent.position().Eta()-self.ecalEntrance.Eta())
             self.phi.append(deltaPhi(constituent.position().Phi(),self.ecalEntrance.Phi()))
             self.rho.append(constituent.position().Rho()-self.ecalEntrance.Rho())
             self.energy.append(constituent.energy())
-            
+            self.ieta.append(0)
+            self.iphi.append(0)
+
             return True
-        
+            
         elif  deltaR(vec.Eta(),vec.Phi(),self.trackVector.Eta(),self.trackVector.Phi())<self.dr:
             self.hcalConstituents.append(constituent)
             self.hcalTiming.append(constituent.time())
@@ -63,6 +69,10 @@ class ShowerFromChargedPion(object):
                 self.hcalVector += vec
             self.typeO.append(2)
 
+            hcalid = ROOT.HcalDetId(constituent.detId())
+            self.depth.append(hcalid.depth())
+            self.ieta.append(hcalid.ieta())
+            self.iphi.append(hcalid.iphi())
             self.eta.append(constituent.position().Eta()-self.ecalEntrance.Eta())
             self.phi.append(deltaPhi(constituent.position().Phi(),self.ecalEntrance.Phi()))
             self.rho.append(constituent.position().Rho()-self.ecalEntrance.Rho())
@@ -73,12 +83,17 @@ class ShowerFromChargedPion(object):
 
 
 
-    def calculate(self):
-        self.hcalEtaPhi = ROOT.TH2F("hcalEtaPhi","",20,-0.5,0.5,-0.5,0.5)
-        self.hcalEtaRho = ROOT.TH2F("hcalEtaRho","",20,-0.5,0.5,-0.5,0.5)
+    def calculateTrackDetId(self):
+        if len(self.hcalConstituents)>0:
+            constituents=sorted(self.hcalConstituents,key = lambda x: deltaR(x.position().Eta(),x.position().Phi(),self.ecalEntrance.Eta(),self.ecalEntrance.Phi()))
+            hcalid = ROOT.HcalDetId(constituents[0].detId())
+            self.ieta[1] = hcalid.ieta()
+            self.iphi[1] = hcalid.iphi()
 
     def makeVisTree(self,tfile,treename):
         tfile.cd()
+        self.calculateTrackDetId()
+        
         tree =ROOT.TTree(treename,treename)
 
         typeO=numpy.zeros(1,float)
@@ -90,19 +105,30 @@ class ShowerFromChargedPion(object):
         phi=numpy.zeros(1,float)
         tree.Branch("phi",phi,'phi/D')
 
+        ieta=numpy.zeros(1,float)
+        tree.Branch("ieta",ieta,'ieta/D')
+
+        iphi=numpy.zeros(1,float)
+        tree.Branch("iphi",iphi,'iphi/D')
+
         rho=numpy.zeros(1,float)
         tree.Branch("rho",rho,'rho/D')
 
         energy=numpy.zeros(1,float)
         tree.Branch("energy",energy,'energy/D')
 
-        for t,e,p,r,en in zip(self.typeO,self.eta,self.phi,self.rho,self.energy):
+        depth=numpy.zeros(1,float)
+        tree.Branch("depth",depth,'depth/D')
+
+        for t,e,p,r,en,d,ie,ip in zip(self.typeO,self.eta,self.phi,self.rho,self.energy,self.depth,self.ieta,self.iphi):
             typeO[0]=t
             eta[0]=e
             phi[0]=p
             rho[0]=r
             energy[0]=en
-
+            depth[0]=d
+            ieta[0]=ie
+            iphi[0]=ip
             tree.Fill()
         tree.Write()
         
@@ -125,7 +151,9 @@ class ShowerFromChargedPion(object):
                      -----------------
                      """
         for c in self.hcalConstituents:
-            str=str+ 'ID={id},Drho={rho},Deta={eta},Dphi={phi},z={z},energy={energy}\n'.format(id= c.detId(),rho=c.position().rho(),eta=c.position().eta(),phi=c.position().phi(),z=c.position().z(),energy=c.energy())
+            hcalid = ROOT.HcalDetId(c.detId())
+
+            str=str+ 'ID={id},Drho={rho},Deta={eta},Dphi={phi},z={z},energy={energy},depth={depth}\n'.format(id= c.detId(),rho=c.position().rho(),eta=c.position().eta(),phi=c.position().phi(),z=c.position().z(),energy=c.energy(),depth=hcalid.depth())
 
 
         return str
