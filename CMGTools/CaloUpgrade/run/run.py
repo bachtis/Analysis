@@ -36,7 +36,6 @@ upgrade = cfg.MCComponent(
             getFiles('/Upgrade/SinglePi_2/GEN-SIM-DIGI/RECO','bachtis','.*root')+ \
             getFiles('/Upgrade/SinglePi_5/GEN-SIM-DIGI/RECO','bachtis','.*root')+ \
             getFiles('/Upgrade/SinglePi_10/GEN-SIM-DIGI/RECO','bachtis','.*root')+ \
-            getFiles('/Upgrade/SinglePi_20/GEN-SIM-DIGI/RECO','bachtis','.*root')+ \
             getFiles('/Upgrade/SinglePi_50/GEN-SIM-DIGI/RECO','bachtis','.*root') ,
 #    files = ['file:reco.root'],
     xSection = 1,
