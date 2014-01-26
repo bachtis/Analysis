@@ -8,16 +8,22 @@ from CMGTools.RootTools.fwlite.Analyzer import Analyzer
 from CMGTools.RootTools.fwlite.Event import Event
 from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.CaloUpgrade.tools.DataFormats import ShowerFromChargedPion 
-
+import ROOT
 
         
         
 class HCALShowerAnalyzer( Analyzer ):
 
     def __init__(self, cfg_ana, cfg_comp, looperName ):
+        self.doVis=True
+        self.visFile=ROOT.TFile("visInput.root","RECREATE")
+        self.doVis=True
+        self.counter=0
         super(HCALShowerAnalyzer,self).__init__(cfg_ana,cfg_comp,looperName)
 
 
+
+        
     def declareHandles(self):
         ''' Here declare handles of all objects we possibly need
         '''
@@ -36,7 +42,6 @@ class HCALShowerAnalyzer( Analyzer ):
     def process(self, iEvent, event):
         self.event = iEvent.eventAuxiliary().id().event()
         self.readCollections( iEvent )
-
         event.pu = self.handles['puInfo'].product()
         event.puInteractions=event.pu[0].getTrueNumInteractions()
 
@@ -58,7 +63,13 @@ class HCALShowerAnalyzer( Analyzer ):
                 shower.addConstituent(hit)
             event.showers.append(shower)    
             print shower
-            
+
+
+        if self.doVis:
+            for i,shower in enumerate(event.showers):
+                shower.makeVisTree(self.visFile,"t_"+str(self.counter)+"_"+str(i))
+
+        self.counter=self.counter+1
         return True
     
 

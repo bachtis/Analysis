@@ -7,12 +7,15 @@ hcalAnalyzer = cfg.Analyzer(
     'HCALShowerAnalyzer',
     )
 
+
+
+
 tree = cfg.Analyzer(
     'HCALShowerTree'
 )    
 
 sequence=[
-    hcalAnalyzer
+    hcalAnalyzer,
     tree
     ]
 

@@ -25,11 +25,11 @@ class HCALShowerTree( TreeAnalyzerNumpy ):
         for shower in event.showers:
             self.reset()
             self.set('nPU',event.puInteractions)
-            self.set('trackPt',block.trackVector.Pt())
-            self.set('trackEta',block.trackVector.Eta())
-            self.set('trackP',block.trackMomentum)
-            self.set('NECAL',float(len(block.ecalConstituents)))
-            self.set('NHCAL',float(len(block.hcalConstiturents)))
+            self.set('trackPt',shower.trackVector.Pt())
+            self.set('trackEta',shower.trackVector.Eta())
+            self.set('trackP',shower.trackMomentum)
+            self.set('NECAL',float(len(shower.ecalConstituents)))
+            self.set('NHCAL',float(len(shower.hcalConstituents)))
             self.fill()
             
 
