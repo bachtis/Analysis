@@ -49,6 +49,7 @@ class Visualizer(object):
             if event.type>-0.5 and event.type<0.5:
                 iEta=event.ieta
                 iPhi=event.iphi
+                print 'Track energy',event.energy
                 
             if event.type>1.5 and event.type<2.5:
                 deltaPhi = event.iphi-iPhi
@@ -59,7 +60,7 @@ class Visualizer(object):
 
                 self.hcal3D.Fill(event.ieta-iEta,deltaPhi,event.depth,event.energy)
                 self.hcalLayers[int(event.depth)-1].Fill(event.ieta-iEta,deltaPhi,event.energy)
-
+                print event.ieta,event.iphi,event.depth,event.energy
                 
         self.canvases=[(ROOT.TCanvas("c3d",""))]
         self.canvases[-1].cd()

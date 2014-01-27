@@ -29,9 +29,9 @@ class ShowerFromChargedPion(object):
         self.ieta=[0,0]
         self.iphi=[0,0]
 
-        self.rho=[self.ecalEntrance.Rho()]
-        self.energy=[self.trackMomentum]
-        self.depth=[-1]
+        self.rho=[self.ecalEntrance.Rho(),self.ecalEntrance.Rho()]
+        self.energy=[self.trackMomentum,self.trackMomentum]
+        self.depth=[-1,-1]
 
 
     def vectorFromConstituent(self,cluster):
