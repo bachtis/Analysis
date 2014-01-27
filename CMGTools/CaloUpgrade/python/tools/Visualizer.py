@@ -5,17 +5,26 @@ class Visualizer(object):
         self.f = ROOT.TFile(filename)
         self.hcal3D = self.createHCALHistogram()
         self.legend,self.hcalLayers=self.createHCALLayers()
-
+        self.ecal = self.createECALHistogram()
         
     def exit(self):
         self.f.Close()
 
+
+    def createECALHistogram(self):
+        h = ROOT.TH2D("ecal","ecal",60,-0.522,0.522,60,-0.522,0.522)
+        h.GetXaxis().SetTitle(" #eta")
+        h.GetYaxis().SetTitle(" #phi")
+        h.SetLineColor(ROOT.kOrange)    
+
+        return h
 
     def createHCALHistogram(self):
         h = ROOT.TH3D("hcal","hcal",16,-8,8,16,-8,8,5,0,5)
         h.GetXaxis().SetTitle("i #eta")
         h.GetYaxis().SetTitle("i #phi")
         h.GetZaxis().SetTitle("depth")
+
         return h
 
     def createHCALLayers(self):
@@ -37,7 +46,7 @@ class Visualizer(object):
         return legend,layers
         
 
-    def process(self,event,shower):
+    def process(self,event,shower,ecalThreshold=0.0,hcalThreshold=0.0):
         self.hcal3D.Reset()
         for layer in self.hcalLayers:
             layer.Reset()
@@ -50,8 +59,14 @@ class Visualizer(object):
                 iEta=event.ieta
                 iPhi=event.iphi
                 print 'Track energy',event.energy
+
                 
-            if event.type>1.5 and event.type<2.5:
+            if event.type>0.5 and event.type<1.5 and event.energy>ecalThreshold:
+                self.ecal.Fill(event.eta,event.phi,event.energy)
+                print 'ECAL',event.eta,event.phi,event.energy
+
+                
+            if event.type>1.5 and event.type<2.5 and event.energy>hcalThreshold:
                 deltaPhi = event.iphi-iPhi
                 if deltaPhi>40:
                     deltaPhi = deltaPhi-72
@@ -60,7 +75,7 @@ class Visualizer(object):
 
                 self.hcal3D.Fill(event.ieta-iEta,deltaPhi,event.depth,event.energy)
                 self.hcalLayers[int(event.depth)-1].Fill(event.ieta-iEta,deltaPhi,event.energy)
-                print event.ieta,event.iphi,event.depth,event.energy
+                print 'HCAL',event.ieta,event.iphi,event.depth,event.energy
                 
         self.canvases=[(ROOT.TCanvas("c3d",""))]
         self.canvases[-1].cd()
@@ -76,5 +91,10 @@ class Visualizer(object):
                 layer.Draw("box,same")
                 
         self.legend.Draw()        
+
+        self.canvases.append(ROOT.TCanvas("ecal",""))
+        self.canvases[-1].cd()
+        self.ecal.Draw("box")
+        
         
 
