@@ -1,7 +1,7 @@
 import ROOT
 from array import array
 import copy
-
+import math
 class PartitionMap(object):
     def __init__(self,ptInv,eta,phi,log = ""):
         self.map =ROOT.TH3F('map','map',len(ptInv)-1,array('f',ptInv),len(eta)-1,array('f',eta),len(phi)-1,array('f',phi))
@@ -224,6 +224,17 @@ class PartitionMap(object):
                                    line.find('phiRaw2').getVal(),
                                    w.var('muMass').getVal())
             line.find('massRaw').setVal((v1+v2).M())
+
+            #recalculate the EbE errors:
+            factor1 = self.getData('Rpos',bin1)
+            factor2 = self.getData('Rneg',bin2)
+            line.find('massErrRaw1').setVal(line.find('massErrRaw1').getVal()*factor1)
+            line.find('massErrRaw2').setVal(line.find('massErrRaw2').getVal()*factor2)
+            line.find('massErrRaw').setVal(math.sqrt(line.find('massErrRaw1').getVal()*line.find('massErrRaw1').getVal()+\
+                                                  line.find('massErrRaw2').getVal()*line.find('massErrRaw2').getVal()))
+            
+
+
             newData.add(line)
 
         return newData

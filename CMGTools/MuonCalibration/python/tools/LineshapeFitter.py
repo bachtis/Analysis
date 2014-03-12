@@ -93,6 +93,23 @@ class LineshapeFitter(object):
 
         self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
 
+    def buildZModelEbE(self,name, var,dataset):
+        self.w.factory('scale[1.0,0.5,1.5]')
+        self.w.factory('errorScale[1,0.1,3.]')
+        self.w.factory("expr::error1('errorScale*massErrRaw',errorScale,massErrRaw)")
+        self.w.factory('error2[0.0]')
+        self.poi.append('scale')
+        self.w.var("scale").setError(0.5)
+
+        pdf = ROOT.RooGaussianSumPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.function('error1'),self.w.var('error2'),dataset,'massRaw')
+        getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdf.Class(),1)
+        getattr(self.w,'import')(pdf)
+        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,0])')
+        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
+
+        self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
+
+
     def buildZModelNobkg(self,name, var,dataset):
         self.w.factory('scale[1.0,0.5,1.5]')
         self.w.factory('error1[1,0.5,5.]')
@@ -126,42 +143,16 @@ class LineshapeFitter(object):
 
         
     def fit(self,model,data, hint = False, verbose =0,snapshot = "result"):
-        minimum = ROOT.Double(0.0)
-        maximum = ROOT.Double(0.0)
         if verbose==0 :
             ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
         hintResult=None
         fitResult=None
         
-        #first extract a  guess
-        if not hint:
-            fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Warnings(verbose),ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Strategy(2),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1))
-            fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Warnings(verbose),ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Strategy(2),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1))
 
-        if hint:
-            for poi in self.poi:
-                self.w.var(poi).setConstant(1)
-            hintResult = self.w.pdf(model).fitTo(data,ROOT.RooFit.Warnings(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.PrintLevel(-1),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1))
-        #now constrain the nuisances within 5 sigma of this guess
-            for nuis in self.nuisances:
-                self.addGaussianConstraint(nuis)
-
-        #now release the POIs
-            for poi in self.poi:
-                self.w.var(poi).setConstant(0)
-                
-            #now build the new model
-            pdfs = ROOT.RooArgList()
-            for pdf in self.constraints+[model]:
-                pdfs.add(self.w.pdf(pdf))
-
-            constrained = ROOT.RooProdPdf('constrained','constrained',pdfs)
-
-            fitResult = constrained.fitTo(data,ROOT.RooFit.Warnings(verbose),ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(6,0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1))
-            fitResult = constrained.fitTo(data,ROOT.RooFit.Warnings(verbose),ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(6,0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1))
-
-            self.w.saveSnapshot(snapshot,','.join(self.poi))    
+        fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Strategy(2),ROOT.RooFit.Minos(1),ROOT.RooFit.Save(1),ROOT.RooFit.ConditionalObservables(ROOT.RooArgSet(self.w.var('massErrRaw'))))
+            
+        self.w.saveSnapshot(snapshot,','.join(self.poi))    
 
         if hintResult is not None:
             print '-------HINT------'

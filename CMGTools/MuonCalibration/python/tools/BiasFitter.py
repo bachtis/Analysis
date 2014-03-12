@@ -18,7 +18,7 @@ class BiasFitter (object):
 
         for i in range(0,negData.numEntries()):
             line = negData.get(i)
-            self.negData.append(line.find('curvRaw2').getVal())
+            self.negData.append(line.find('curvRaw1').getVal())
 
             
         self.pdf = ROOT.RooPosNegBiasEstimator('model','biasE',self.w.var('bias'),len(self.posData),array('d',self.posData),len(self.negData),array('d',self.negData))
@@ -70,7 +70,4 @@ class BiasFitter (object):
         result = minuit.save()
         minuit.cleanup()
         return result
-        
 
-            
-            

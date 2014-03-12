@@ -162,88 +162,8 @@ class DataSetBuilder (object):
 
             
 
-    def reweighData(self,data,sign):
-        if sign =='pos':
-            wvar = 'curvRaw2'
-        else:    
-            wvar = 'curvRaw1'
-          
-        self.w.var(wvar).setBins(30)
-        histo = self.convertToBinned(data,wvar,30).createHistogram(wvar,30)
-        x=0.0
-        bin=0
-        content=0.0
-        weight=0.0
-        weightErr=0.0
-        line = data.get()
-        line.add(self.w.var('weight'))
-        newData =ROOT.RooDataSet("test","test",line)
-        for i in range(0,data.numEntries()):
-            x = data.get(i).find(wvar).getVal()
-            bin = histo.GetXaxis().FindBin(x)
-            content = histo.GetBinContent(bin)
-            if content>0.0:
-                weight = 1./content
-                weightErr = histo.GetBinError(bin)/(content*content)
-                self.w.var('weight').setVal(weight)
-                self.w.var('weight').setError(weightErr)
-            else:    
-                weight = 0.0
-                weightErr = 1.8
-
-            argset =data.get(i)
-            argset.add(self.w.var('weight'))
-            newData.add(argset)
-        weightedData = ROOT.RooDataSet(data.GetName(),"data",newData,newData.get(),'',"weight");
-        return weightedData
-
-
-
-    def reweighData2D(self,data):
-                  
-        self.w.var('curvRaw1').setBins(30)
-        self.w.var('curvRaw2').setBins(30)
         
-        histo = self.convertToBinned2D(data,['curvRaw1','curvRaw2'],30,30).createHistogram('curvRaw1,curvRaw2',30,30)
-        x=0.0
-        y=0.0
-        
-        bin=0
-        content=0.0
-        weight=0.0
-        weightErr=0.0
-
-        line = data.get()
-        line.add(self.w.var('weight'))
-        newData = ROOT.RooDataSet('test','test',line)
-                 
-        for i in range(0,data.numEntries()):
-            x = data.get(i).find('curvRaw1').getVal()
-            y = data.get(i).find('curvRaw2').getVal()
-            binx = histo.GetXaxis().FindBin(x)
-            biny = histo.GetXaxis().FindBin(y)
-            bin=histo.GetBin(binx,biny)
-            
-            content = histo.GetBinContent(bin)
-            if content>0.0:
-                weight = 1./content
-                weightErr = histo.GetBinError(bin)/(content*content)
-                self.w.var('weight').setVal(weight)
-                self.w.var('weight').setError(weightErr)
-            else:    
-                weight = 0.0
-                weightErr = 1.8
-
-            argset =data.get(i)
-            argset.add(self.w.var('weight'))
-            newData.add(argset)
-        weightedData = ROOT.RooDataSet(data.GetName(),"data",newData,newData.get(),'',"weight");
-        return weightedData
-
-    
-        
-        
-    def build(self,reweigh = False):
+    def build(self,max=-1):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
@@ -254,23 +174,18 @@ class DataSetBuilder (object):
                     setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                     setPos.SetName("pos_"+str(bin))
 
-                    if reweigh:
-#                        setPos2 = self.reweighData(setPos,'pos')
-                        setPos2 = self.reweighData2D(setPos)
-                        self.positiveSamples[bin]=setPos2
-                    else:
-                        self.positiveSamples[bin]=setPos
+                    if max>-1:
+                        setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
+                    self.positiveSamples[bin]=setPos
                         
                     setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                     setNeg.SetName("neg_"+str(bin))
 
 
-                    if reweigh:
-#                        setNeg2=self.reweighData(setNeg,'neg')
-                        setNeg2=self.reweighData2D(setNeg)
-                        self.negativeSamples[bin]=setNeg2
-                    else:    
-                        self.negativeSamples[bin]=setNeg
+                    if max>-1:
+                        setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
+
+                    self.negativeSamples[bin]=setNeg
         self.cache.Close()
         self.statistics()
 
