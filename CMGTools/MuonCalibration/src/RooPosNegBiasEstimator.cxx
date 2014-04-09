@@ -9,6 +9,7 @@
 # include "../interface/RooPosNegBiasEstimator.h"
 #include "TMath.h"
 #include <math.h>
+#include "TH1F.h"
 
 ClassImp(RooPosNegBiasEstimator)
 
@@ -77,15 +78,23 @@ Double_t RooPosNegBiasEstimator::getProbability() const
 
   std::vector<double> posNew; 
   std::vector<double> negNew; 
+  TH1F * hPos = new TH1F("pos","pos",100,0.005,0.05);
+  TH1F * hNeg = new TH1F("neg","neg",100,0.005,0.05);
 
-
-  for (unsigned int i=0;i<posVector.size();++i)
+  for (unsigned int i=0;i<posVector.size();++i) {
+    hPos->Fill(posVector.at(i)+Double_t(bias));
     posNew.push_back(posVector.at(i)+Double_t(bias));
-  for (unsigned int j=0;j<negVector.size();++j)
-    negNew.push_back(negVector.at(j)-Double_t(bias));
 
+  }
+  for (unsigned int j=0;j<negVector.size();++j) {
+    hNeg->Fill(negVector.at(j)-Double_t(bias));
+    negNew.push_back(negVector.at(j)-Double_t(bias));
+  }
   
-  double prob = TMath::KolmogorovTest(posVector.size(),posNew.data(),negVector.size(),negNew.data(),"");
+  //  double prob = TMath::KolmogorovTest(posVector.size(),posNew.data(),negVector.size(),negNew.data(),"");
+  double prob = hPos->Chi2Test(hNeg);
+  delete hPos;
+  delete hNeg;
   return prob;
 
 

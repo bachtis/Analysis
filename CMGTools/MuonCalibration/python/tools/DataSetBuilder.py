@@ -1,7 +1,7 @@
 import ROOT
 import os
 import array
-
+import datetime
 
 class DataSetBuilder (object):
     def __init__(self,pmap,workspace,file,dataset,entries,unfold = False,smear = False):
@@ -9,7 +9,7 @@ class DataSetBuilder (object):
         self.w=workspace
         f = ROOT.TFile(file)
         datas=f.Get(dataset)
-        self.cache = ROOT.TFile('__cacheE__.root','RECREATE')
+        self.cache = ROOT.TFile('__cacheE__'+str(datetime.datetime.now().time())+'.root','RECREATE')
         limits = self.map.limits()
         cut1="curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=limits['curv'][0],curvUp=limits['curv'][1],etaDown=limits['eta'][0],etaUp=limits['eta'][1],phiDown=limits['phi'][0],phiUp=limits['phi'][1])
         cut2="curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=limits['curv'][0],curvUp=limits['curv'][1],etaDown=limits['eta'][0],etaUp=limits['eta'][1],phiDown=limits['phi'][0],phiUp=limits['phi'][1])
@@ -51,12 +51,43 @@ class DataSetBuilder (object):
         if smear:
             self.tree=pmap.smearEbE2D(self.tree,self.w)
 #            self.unsmearedTree = self.tree
-#            self.tree=pmap.smear(self.tree,self.w,0.01)
+#            self.tree=pmap.smear2D(self.tree,self.w,0.01)
 
         if unfold:
             self.foldedTree =self.tree
-            self.tree = self.unfoldDataSet2D(self.tree)
+#            self.tree = self.unfoldDataSet2D(self.tree)
+#            print 'before UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
 
+            self.tree = self.unfoldDataSetSlice(self.tree,'pos')
+#            print 'first UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
+
+            self.tree = self.unfoldDataSetSlice(self.tree,'neg')
+#            print 'second UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
+
+
+    def save(self,filename):
+        f = ROOT.TFile(filename,"RECREATE")
+        f.cd()
+        for bin,data in self.positiveSamples.iteritems():
+            data.SetName("pos_"+str(bin))
+            data.Write()
+        for bin,data in self.negativeSamples.iteritems():
+            data.SetName("neg_"+str(bin))
+            data.Write()
+        f.Close()
+
+    def load(self,filename):
+        f = ROOT.TFile(filename)
+
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    self.positiveSamples[bin]=f.Get("pos_"+str(bin))
+                    self.negativeSamples[bin]=f.Get("neg_"+str(bin))
+
+            
+            
 
     def getDerivativeOverContent(self,h,x):
         b = h.GetXaxis().FindBin(x)
@@ -130,8 +161,8 @@ class DataSetBuilder (object):
             line = data.get(i)
             x = line.find('curvRaw1').getVal()
             y = line.find('curvRaw2').getVal()
-            resolutionx = line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
-            resolutiony = line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
+            resolutionx = 2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
+            resolutiony = 2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
             derivx = self.getDerivative2D(spectrum,x,y,'X')
             derivy = self.getDerivative2D(spectrum,x,y,'Y')
 
@@ -155,6 +186,46 @@ class DataSetBuilder (object):
 
             line.find('massRaw').setVal((v1+v2).M())
 #            print 'after',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
+
+            newData.add(line)
+        return newData
+
+    def unfoldDataSetSlice(self,data,sign):
+        if sign=='pos':
+            curv='curvRaw1'
+            othercurv='curvRaw2'
+            massErr='massErrRaw1'
+        else:
+            curv='curvRaw2'
+            othercurv='curvRaw1'
+            massErr='massErrRaw2'
+            
+        spectrum = self.convertToBinned(data,curv,100).createHistogram(curv,100)
+        newData = ROOT.RooDataSet(data.GetName(),data.GetTitle(),data.get())
+        for i in range(0,data.numEntries()):
+            line = data.get(i)
+            x = line.find(curv).getVal()
+#            resolution = 2*line.find(massErr).getVal()*line.find(curv).getVal()/line.find('massRaw').getVal()
+#            resolution = 0.00022
+            resolution = 0.01*line.find(curv).getVal()
+            derivx = self.getDerivativeOverContent(spectrum,x)
+            
+            line.find(curv).setVal(x+resolution*resolution*derivx)
+
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   self.w.var('muMass').getVal())
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   self.w.var('muMass').getVal())
+
+            line.find('massRaw').setVal((v1+v2).M())
+
 
             newData.add(line)
         return newData
@@ -186,6 +257,45 @@ class DataSetBuilder (object):
                         setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
 
                     self.negativeSamples[bin]=setNeg
+        self.cache.Close()
+        self.statistics()
+
+    def buildFast(self,max=-1):
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    self.positiveSamples[bin] = ROOT.RooDataSet("pos_"+str(bin),"",self.tree.get())
+                    self.negativeSamples[bin] = ROOT.RooDataSet("neg_"+str(bin),"",self.tree.get())
+                    
+        for event in range(0,self.tree.numEntries()):
+            line = self.tree.get(event)
+            for i in range(1,self.map.bins_curv()+1):
+                for j in range(1,self.map.bins_eta()+1):
+                    for k in range(1,self.map.bins_phi()+1):
+                        bin = self.map.bin(i,j,k)
+                        curvDown,curvUp = self.map.boundaries_curv(bin)
+                        etaDown,etaUp = self.map.boundaries_eta(bin)
+                        phiDown,phiUp = self.map.boundaries_phi(bin)
+
+                        curv1 = line.find("curvRaw1").getVal()
+                        eta1  = line.find("etaRaw1").getVal()
+                        phi1  = line.find("phiRaw1").getVal()
+                        curv2 = line.find("curvRaw2").getVal()
+                        eta2  = line.find("etaRaw2").getVal()
+                        phi2  = line.find("phiRaw2").getVal()
+
+
+                        if curv1>curvDown and curv1<curvUp and \
+                           eta1>etaDown and eta1<etaUp and \
+                           phi1>phiDown and phi1<phiUp:
+                            if max<0 or self.positiveSamples[bin].numEntries()<max:
+                                self.positiveSamples[bin].add(line)
+                        if curv2>curvDown and curv2<curvUp and \
+                           eta2>etaDown and eta2<etaUp and \
+                           phi2>phiDown and phi2<phiUp:
+                            if max<0 or self.negativeSamples[bin].numEntries()<max:
+                                self.negativeSamples[bin].add(line)
         self.cache.Close()
         self.statistics()
 

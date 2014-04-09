@@ -6,7 +6,8 @@ class BiasFitter (object):
         self.posData=[]
         self.negData=[]
         self.w=workspace
-        self.w.factory('bias[1e-6,-0.001,0.001]')
+        self.w.factory('bias[1e-6,-0.0005,0.0005]')
+
 
     def prepareModel(self):
         posData = self.w.data('pos')
@@ -32,7 +33,7 @@ class BiasFitter (object):
 
     def optimize(self):
         print 'optimizing range'
-        offset=5e-6
+        offset=1e-6
 
         mini = self.w.var("bias").getMin()
         maxi = self.w.var("bias").getMax()
@@ -60,11 +61,11 @@ class BiasFitter (object):
         minuit = ROOT.RooMinuit(self.pdf)
         minuit.setVerbose(verbose)
         minuit.setStrategy(2)
-        minuit.setEps(1e-7)
+        minuit.setEps(1e-9)
 #        minuit.seek()
         self.optimize()
         minuit.migrad()
-        minuit.improve()
+#        minuit.improve()
         minuit.hesse()
         minuit.minos()
         result = minuit.save()

@@ -1,12 +1,15 @@
 using namespace RooFit;
 
-void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection) {
+
+void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false) {
 
   TFile * f = new TFile(file);
   TTree  *t = f->Get(tree);
   RooWorkspace *w = new RooWorkspace("w","w");
   w->factory("curvRaw1[0,1000]");
   w->factory("curvRaw2[0,1000]");
+  w->factory("curvGenRaw1[0,1000]");
+  w->factory("curvGenRaw2[0,1000]");
   w->factory("etaRaw1[-2.5,2.5]");
   w->factory("etaRaw2[-2.5,2.5]");
   w->factory("phiRaw1[-4,4]");
@@ -16,6 +19,7 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   w->factory("massErrRaw2[1.0,0,30.]");
   w->factory("muMass[0.1056583715]");
   w->factory("massRaw[0,1000]");
+
 
   TFile * cache = new TFile("__cacheR__.root","RECREATE");
   TTree*  newtree = t->CopyTree(preselection);
@@ -30,17 +34,24 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   set.add(*w->var("massErrRaw1"));
   set.add(*w->var("massErrRaw2"));
   set.add(*w->var("massErrRaw"));
+  set.add(*w->var("curvGenRaw1"));
+  set.add(*w->var("curvGenRaw2"));
 
 
 
 
   RooDataSet *  data  = new RooDataSet("data","DATA",set);
 
-  Double_t pt1,eta1,phi1,pt2,eta2,phi2;
+  Double_t pt1,eta1,phi1,pt2,eta2,phi2,ptgen1,ptgen2;
   Double_t covPlus[9];
   Double_t covMinus[9];
 
   newtree->SetBranchAddress(TString::Format("%s_pt",muon1),&pt1);
+  newtree->SetBranchAddress(TString::Format("%s_pt",muon2),&pt2);
+  if (!isGEN) {
+    newtree->SetBranchAddress("MuPosGenStatus1_pt",&ptgen1);
+    newtree->SetBranchAddress("MuNegGenStatus1_pt",&ptgen2);
+  }
   newtree->SetBranchAddress(TString::Format("%s_pt",muon2),&pt2);
   newtree->SetBranchAddress(TString::Format("%s_eta",muon1),&eta1);
   newtree->SetBranchAddress(TString::Format("%s_eta",muon2),&eta2);
@@ -57,6 +68,15 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
     newtree->GetEntry(i);
 
     w->var("curvRaw1")->setVal(1./pt1);
+    if (isGEN) {
+      w->var("curvGenRaw1")->setVal(1./pt1);
+      w->var("curvGenRaw2")->setVal(1./pt2);
+
+    }
+    else {
+      w->var("curvGenRaw1")->setVal(1./ptgen1);
+      w->var("curvGenRaw2")->setVal(1./ptgen2);
+    }
     w->var("etaRaw1")->setVal(eta1);
     w->var("phiRaw1")->setVal(phi1);
     w->var("curvRaw2")->setVal(1./pt2);
@@ -70,6 +90,7 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
  
 
     w->var("massRaw")->setVal(((*v1)+(*v2)).M());
+
 
     //Event by event error
     TMatrixDSym covMatrix(6);

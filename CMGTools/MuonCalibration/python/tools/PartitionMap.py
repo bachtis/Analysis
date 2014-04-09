@@ -187,7 +187,7 @@ class PartitionMap(object):
         self.map.GetBinXYZ(bin,binC,binEta,binPhi)
         return (self.map.GetZaxis().GetBinLowEdge(binPhi),self.map.GetZaxis().GetBinUpEdge(binPhi))
     
-    def recalibrate(self,data,w,calib = 'sum'):
+    def recalibrate(self,data,what = 'C',calib = 'sum'):
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
@@ -196,12 +196,12 @@ class PartitionMap(object):
                                     line.find('etaRaw1').getVal(),
                                     line.find('phiRaw1').getVal())
             
-            factor1 = self.getData('Cpos',bin1)
+            factor1 = self.getData(what+'pos',bin1)
             bin2 = self.binFromVals(line.find('curvRaw2').getVal(),
                                     line.find('etaRaw2').getVal(),
                                     line.find('phiRaw2').getVal())
             
-            factor2 = self.getData('Cneg',bin2)
+            factor2 = self.getData(what+'neg',bin2)
 
 
             if calib =="sum":
@@ -216,28 +216,35 @@ class PartitionMap(object):
             v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
                                    line.find('etaRaw1').getVal(),
                                    line.find('phiRaw1').getVal(),
-                                   w.var('muMass').getVal())
+                                   0.1056583715)
             
             v2=ROOT.TLorentzVector()
             v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
                                    line.find('etaRaw2').getVal(),
                                    line.find('phiRaw2').getVal(),
-                                   w.var('muMass').getVal())
+                                   0.1056583715)
             line.find('massRaw').setVal((v1+v2).M())
 
-            #recalculate the EbE errors:
+            newData.add(line)
+
+        return newData
+
+
+    def recalibrateEbE(self,data):
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
             factor1 = self.getData('Rpos',bin1)
             factor2 = self.getData('Rneg',bin2)
             line.find('massErrRaw1').setVal(line.find('massErrRaw1').getVal()*factor1)
             line.find('massErrRaw2').setVal(line.find('massErrRaw2').getVal()*factor2)
             line.find('massErrRaw').setVal(math.sqrt(line.find('massErrRaw1').getVal()*line.find('massErrRaw1').getVal()+\
                                                   line.find('massErrRaw2').getVal()*line.find('massErrRaw2').getVal()))
-            
-
-
             newData.add(line)
 
         return newData
+
+
 
     def smear(self,data,w,amount = 0.01):
         random = ROOT.TRandom3(101082)
@@ -248,6 +255,7 @@ class PartitionMap(object):
             newData.add(line)
 
         return newData
+
 
 
     def smearEbE(self,data,w):
@@ -261,14 +269,50 @@ class PartitionMap(object):
 
         return newData
 
-    def smearEbE2D(self,data,w):
+    def smearEbE2D(self,data,w,shift = 0.0):
         random = ROOT.TRandom3(101082)
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
 
-            errx = line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
-            erry = line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
+            errx = 2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
+            erry = 2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
+
+
+#            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
+
+            line.find('curvRaw1').setVal(line.find('curvRaw1').getVal()+random.Gaus(shift,errx))
+            line.find('curvRaw2').setVal(line.find('curvRaw2').getVal()+random.Gaus(shift,erry))
+
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   w.var('muMass').getVal())
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   w.var('muMass').getVal())
+
+            line.find('massRaw').setVal((v1+v2).M())
+
+#            print 'after',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
+            
+            newData.add(line)
+
+        return newData
+
+
+    def smear2D(self,data,w,resolution=0.01):
+        random = ROOT.TRandom3(101082)
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
+
+            errx = resolution*line.find('curvRaw1').getVal()
+            erry = resolution*line.find('curvRaw2').getVal()
 
 
 #            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()

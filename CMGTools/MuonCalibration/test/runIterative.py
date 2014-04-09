@@ -31,8 +31,10 @@ for i in range(0,13):
 etaArr = [-2.4,-2.3,-1.9,-1.5,-1.1,-0.9,0.0,0.9,1.1,1.5,1.9,2.3,2.4]
 
 #etaArr = [-1.1,-0.9,0.0,0.9,1.1]
+etaArr = [-2.4,-1.1,1.1,2.4]
 
-pmap = PartitionMap(curvArr,etaArr,phiArr,"results_IR.root")
+
+pmap = PartitionMap(curvArr,etaArr,phiArr,"results_IR_1_broadEta.root")
 
 #pmap = PartitionMap([0.005,0.05],[-1.3,1.3],[-math.pi,math.pi],"results_IR.root")
 
@@ -54,7 +56,7 @@ builderMC = DataSetBuilder(pmap,w,'ZGEN.root','data',500000000)
 
 
 builder.build()
-builderMC.build(1000)
+builderMC.build(2000)
 
 
 
@@ -102,16 +104,11 @@ for N in range(0,10):
                 othersign = "pos"
                 othercurv = "curvRaw1"
                 curv = 'curvRaw2'
-                massErr = 'massErrRaw2'
+X                massErr = 'massErrRaw2'
                 otherMassErr = 'massErrRaw1'
                 
             value,error = sched[sign].harvest(bin)
 
-            #if fit diverged clear
-            if value<0.97 or value>1.03:
-                value=1
-                error=1
-                
 
             pmap.setData('C'+sign+'Scale',bin,value,error )
 
