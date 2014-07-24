@@ -32,12 +32,10 @@ public:
 	virtual TObject* clone(const char* newname) const { return new RooGaussianSumPdf(*this,newname); }
 	inline virtual ~RooGaussianSumPdf() { }
 
-	//	Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
-	//	Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
+	Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
+	Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
 
-	Bool_t selfNormalized() const {
-	  return true;
-	}
+
 protected:
 	
 	RooRealProxy mass ;

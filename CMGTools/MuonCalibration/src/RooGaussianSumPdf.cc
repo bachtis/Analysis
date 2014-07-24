@@ -51,14 +51,35 @@ Double_t RooGaussianSumPdf::evaluate() const
   Double_t arg= 0.0;
   Double_t sum=0.0;
   Double_t sumw=0.0;
-  static const Double_t sqrt2pi(sqrt(2*TMath::Pi()));
-
+  
   for (unsigned int i=0;i<data.size();++i) {
-    arg = (mass-scale*data.at(i).second)/error1;
-    sum=sum+(data.at(i).first/(sqrt2pi*error1))*exp(-0.5*arg*arg);
-    sumw=sumw+data.at(i).first;
+    arg = (mass-scale*data[i].second)/(error1);
+    sum=sum+data[i].first*exp(-0.5*arg*arg);
+    sumw=sumw+data[i].first;
   }
   return sum/sumw;
 }
 
+Int_t RooGaussianSumPdf::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
+{
+  if (matchArgs(allVars,analVars,mass)) return 1 ;
+  return 0;
+}
+
+
+Double_t RooGaussianSumPdf::analyticalIntegral(Int_t code, const char* rangeName) const 
+{
+  static const Double_t root2 = sqrt(2.) ;
+  static const Double_t rootPiBy2 = sqrt(atan2(0.0,-1.0)/2.0);
+  Double_t xscale = root2*error1;
+  Double_t ret = 0;
+  Double_t sumw = 0;
+  
+  for (unsigned int i=0;i<data.size();++i) {
+    ret = ret+data[i].first*rootPiBy2*error1*(RooMath::erf((mass.max(rangeName)-scale*data[i].second)/xscale)-RooMath::erf((mass.min(rangeName)-scale*data[i].second)/xscale));
+    sumw=sumw+data[i].first;
+  }
+  return ret/sumw ;
+
+}
 

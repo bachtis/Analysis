@@ -76,6 +76,27 @@ class DataSetBuilder (object):
             data.Write()
         f.Close()
 
+    def savePairs(self,filename):
+        f = ROOT.TFile(filename,"RECREATE")
+        f.cd()
+        for name,sample in self.pairSamples.iteritems():
+            sample.Write()
+        f.Close()
+
+    def loadPairs(self,filename):
+        f = ROOT.TFile(filename)
+        self.pairSamples=[]
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    for l in range(1,self.map.bins_curv()+1):
+                        for m in range(1,self.map.bins_eta()+1):
+                            for n in range(1,self.map.bins_phi()+1):
+
+                                bin1 = self.map.bin(i,j,k)
+                                bin2 = self.map.bin(l,m,n)
+                                self.pairSamples.append({'bin1':bin1,'bin2':bin2,'data':f.Get(str(bin1)+'_'+str(bin2))})
+
     def load(self,filename):
         f = ROOT.TFile(filename)
 
@@ -234,7 +255,7 @@ class DataSetBuilder (object):
             
 
         
-    def build(self,max=-1):
+    def build(self,max=-1,exclusive=0):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
@@ -242,14 +263,25 @@ class DataSetBuilder (object):
                     curvDown,curvUp = self.map.boundaries_curv(bin)
                     etaDown,etaUp = self.map.boundaries_eta(bin)
                     phiDown,phiUp = self.map.boundaries_phi(bin)
-                    setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    if exclusive==0:
+                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    elif exclusive==1:
+                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&(!(curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    else:
+                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&((curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                        
                     setPos.SetName("pos_"+str(bin))
 
                     if max>-1:
                         setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
                     self.positiveSamples[bin]=setPos
+                    if  exclusive==0:    
+                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    elif exclusive ==1:
+                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&(!(curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    else:
+                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&((curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                         
-                    setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                     setNeg.SetName("neg_"+str(bin))
 
 
@@ -259,6 +291,71 @@ class DataSetBuilder (object):
                     self.negativeSamples[bin]=setNeg
         self.cache.Close()
         self.statistics()
+
+
+    def buildAveragePt(self,max=-1,exclusive=0):
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    curvDown,curvUp = self.map.boundaries_curv(bin)
+                    etaDown,etaUp = self.map.boundaries_eta(bin)
+                    phiDown,phiUp = self.map.boundaries_phi(bin)
+                    if exclusive==0:
+                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    elif exclusive==1:
+                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&(!(curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    else:
+                        setPos = self.tree.reduce("((curvRaw1+curvRaw2)/2.>{curvDown}&&(curvRaw1+curvRaw2)/2.<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&(etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                        
+                    setPos.SetName("pos_"+str(bin))
+
+                    if max>-1:
+                        setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
+                    self.positiveSamples[bin]=setPos
+                    if  exclusive==0:    
+                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    elif exclusive ==1:
+                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&(!(curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    else:
+                        setNeg = self.tree.reduce("(curvRaw1+curvRaw2)/2.>{curvDown}&&(curvRaw1+curvRaw2)/2.<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&((etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                        
+                    setNeg.SetName("neg_"+str(bin))
+
+
+                    if max>-1:
+                        setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
+
+                    self.negativeSamples[bin]=setNeg
+        self.cache.Close()
+        self.statistics()        
+
+    def buildGEN(self,max=-1):
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    curvDown,curvUp = self.map.boundaries_curv(bin)
+                    etaDown,etaUp = self.map.boundaries_eta(bin)
+                    phiDown,phiUp = self.map.boundaries_phi(bin)
+                    setPos = self.tree.reduce("curvGenRaw1>{curvDown}&&curvGenRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    setPos.SetName("pos_"+str(bin))
+
+                    if max>-1:
+                        setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
+                    self.positiveSamples[bin]=setPos
+                        
+                    setNeg = self.tree.reduce("curvGenRaw2>{curvDown}&&curvGenRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    setNeg.SetName("neg_"+str(bin))
+
+
+                    if max>-1:
+                        setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
+
+                    self.negativeSamples[bin]=setNeg
+        self.cache.Close()
+        self.statistics()
+
 
     def buildFast(self,max=-1):
         for i in range(1,self.map.bins_curv()+1):
@@ -301,7 +398,7 @@ class DataSetBuilder (object):
 
 
 
-    def buildPairs(self,minEntries = 50 , isGen = False ):
+    def buildPairs(self):
         #first create the datasets
         pairSamples={}
         for i in range(1,self.map.bins_curv()+1):
@@ -334,31 +431,10 @@ class DataSetBuilder (object):
             if str(bin1)+'_'+str(bin2) in pairSamples:
                 pairSamples[str(bin1)+'_'+str(bin2)].add(line)
 
-            #if it is MC add also the symmetric sample
-            if isGen and  str(bin2)+'_'+str(bin1) in pairSamples:
-                pairSamples[str(bin1)+'_'+str(bin2)].add(line)
 
+        self.pairSamples = pairSamples
             
-        print 'OK now pruning the samples'
-
-        lowStatSamples=[]
-        for title,data in pairSamples.iteritems():
-            if data.numEntries()<minEntries:
-                lowStatSamples.append(title)
-            else:
-                print 'Found high stat',data.numEntries()
-        for entry in lowStatSamples:
-            del pairSamples[entry]
-
-        #convert to standard format    
-        print 'CONVERTING'
-        for i,(title,data) in enumerate(pairSamples.iteritems()):
-            bins = title.split('_')
-            self.pairSamples[i] = {'bin1':int(bins[0]),'bin2':int(bins[1]),'data':data}
-            
-        
         self.statisticsPairs()                            
-
 
     def statistics(self):
         print 'Number of positive bins',len(self.positiveSamples)
@@ -379,9 +455,12 @@ class DataSetBuilder (object):
 
         entries=[]
 
-        for entry,sample in self.pairSamples.iteritems():
-            entries.append(sample['data'].numEntries())
+        for sample,data in self.pairSamples.iteritems():
+            entries.append(data.numEntries())
         print 'Minimum number of entries',str(min(entries)), ' out of ',str(self.tree.numEntries()),'input entries'
+        entries = filter(lambda x: x>0,entries)
+        print 'Minimum number of entries',str(min(entries)), ' out of ',str(self.tree.numEntries()),'input entries excl zero'
+
 
 
     def posData(self):

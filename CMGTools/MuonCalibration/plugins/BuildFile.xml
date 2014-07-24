@@ -1,0 +1,9 @@
+<library   name="CMGToolsMuonCalibrationPlugins" file="*.cc">
+  <use   name="FWCore/Framework"/>
+  <use   name="MagneticField/Engine"/>
+  <use   name="MagneticField/Records"/>
+  <use   name="DataFormats/GeometryVector"/>
+  <use   name="Utilities/Timing"/>
+  <use   name="root"/>
+  <flags   EDM_PLUGIN="1"/>
+</library>

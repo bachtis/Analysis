@@ -24,8 +24,8 @@ public:
 		      RooAbsReal& _error1,
 		      RooAbsReal& _error2,
  		      const RooDataSet& data,
- 		      const char* varName,
-                      const char* weightName);
+		      const char* varName,
+		      const char* errorVarName);
 
 
 
@@ -33,12 +33,10 @@ public:
 	virtual TObject* clone(const char* newname) const { return new RooGaussianSumPdfWithSigma(*this,newname); }
 	inline virtual ~RooGaussianSumPdfWithSigma() { }
 
-	//	Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
-	//	Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
+	Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
+	Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
 
-	Bool_t selfNormalized() const {
-	  return true;
-	}
+
 protected:
 	
 	RooRealProxy mass ;
@@ -47,9 +45,10 @@ protected:
 	RooRealProxy error2 ;
 	
 	Double_t evaluate() const ;
-	std::vector<double> data;
-	std::vector<double> sigma;
-	std::vector<double> weight;
+	std::vector<double> weights;
+	std::vector<double> masses;
+	std::vector<double> errors;
+
 
 
 private:

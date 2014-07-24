@@ -13,16 +13,9 @@ class BiasFitter (object):
         posData = self.w.data('pos')
         negData = self.w.data('neg')
         
-        for i in range(0,posData.numEntries()):
-            line = posData.get(i)
-            self.posData.append(line.find('curvRaw1').getVal())
-
-        for i in range(0,negData.numEntries()):
-            line = negData.get(i)
-            self.negData.append(line.find('curvRaw1').getVal())
 
             
-        self.pdf = ROOT.RooPosNegBiasEstimator('model','biasE',self.w.var('bias'),len(self.posData),array('d',self.posData),len(self.negData),array('d',self.negData))
+        self.pdf = ROOT.RooPosNegBiasEstimator('model','biasE',self.w.var('bias'),posData,negData,'curvRaw1','curvRaw2')
         
 
     def importData(self,dataPos,dataNeg):
@@ -61,13 +54,14 @@ class BiasFitter (object):
         minuit = ROOT.RooMinuit(self.pdf)
         minuit.setVerbose(verbose)
         minuit.setStrategy(2)
-        minuit.setEps(1e-9)
+        minuit.setEps(1e-12)
+        minuit.setOffsetting(1)
 #        minuit.seek()
         self.optimize()
         minuit.migrad()
 #        minuit.improve()
         minuit.hesse()
-        minuit.minos()
+#        minuit.minos()
         result = minuit.save()
         minuit.cleanup()
         return result

@@ -8,13 +8,10 @@ import ROOT
 
 
 class SimpleKalmanFilter(object):
-    def create(self,x,H,P):
+    def create(self,x,P):
         self.x = x
         self.P = P
         self.i=0
-        self.H=H
-        self.HT = ROOT.TMatrixD(H)
-        self.HT.T()
         self.history = {0:x}
 
     def save(self,filename):
@@ -35,18 +32,24 @@ class SimpleKalmanFilter(object):
         self.i=i+1
 
         
-    def iterate(self,z,R,history=False):    
-        residual = z-self.H*self.x
+    def iterate(self,z,R,H,h,history=False):    
+        self.H=H
+        self.HT = ROOT.TMatrixD(H)
+        self.HT.T()
+
+        residual = z-h
 
         PH = ROOT.TMatrixD(self.P,ROOT.TMatrixD.kMult,self.HT)
         HPH = ROOT.TMatrixD(self.H,ROOT.TMatrixD.kMult,PH)
         S = HPH+R
 
+#        import pdb;pdb.set_trace()
         #Be a bit picky on inversion and try different algorithms
-        SVD = ROOT.TDecompSVD(S)
-        SVDinv = SVD.Invert()
-        S = SVDinv
-        print 'SVD inversion succeeded '
+#        SVD = ROOT.TDecompSVD(S)
+#        SVDinv = SVD.Invert()
+#        S = SVDinv
+        S.Invert()
+#        print 'SVD inversion succeeded '
         HSinv = ROOT.TMatrixD(self.HT)
         HSinv*=S
         K=ROOT.TMatrixD(self.P,ROOT.TMatrixD.kMult,HSinv)

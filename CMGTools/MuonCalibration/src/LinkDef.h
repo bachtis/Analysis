@@ -1,4 +1,5 @@
 #include "../interface/Roo3DMapVar.h"
+#include "../interface/Roo2DMapVar.h"
 #include "../interface/RooGaussianSumPdf.h"
 #include "../interface/RooGaussianSumPdfWithSigma.h"
 #include "../interface/RooGaussianSumPdf2D.h"
@@ -12,6 +13,7 @@
 #pragma link C++ class RooGaussianSumPdfWithSigma+;
 #pragma link C++ class RooGaussianSumPdf2D+;
 #pragma link C++ class Roo3DMapVar+;
+#pragma link C++ class Roo2DMapVar+;
 #pragma link C++ class RooPosNegBiasEstimator+;
 #endif
 

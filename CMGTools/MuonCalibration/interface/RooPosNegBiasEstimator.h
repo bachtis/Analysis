@@ -9,14 +9,14 @@
 #include "RooLinkedList.h"
 #include "RooAbsProxy.h"
 #include <TMath.h>
-
+#include "RooDataSet.h"
 class RooArgSet ;
 
 class RooPosNegBiasEstimator : public RooAbsReal {
 public:
   // Constructors, assignment etc
   inline RooPosNegBiasEstimator()   { }
-  RooPosNegBiasEstimator(const char *name, const char *title,RooAbsReal& _bias, int npos,  const Double_t * pos, int nneg, const Double_t * neg);  
+  RooPosNegBiasEstimator(const char *name, const char *title,RooAbsReal& _bias, const RooDataSet* pos, const RooDataSet* neg,const char* var1,const char* var2);
     RooPosNegBiasEstimator(const RooPosNegBiasEstimator& other, const char* name=0);
     virtual TObject* clone(const char* newname) const { return new RooPosNegBiasEstimator(*this,newname); }
     virtual ~RooPosNegBiasEstimator();
@@ -33,7 +33,9 @@ protected:
   virtual Bool_t isValidReal(Double_t value, Bool_t printError) const ;
   RooRealProxy bias;
   std::vector<double> posVector;
+  std::vector<double> posWeights;
   std::vector<double> negVector;
+  std::vector<double> negWeights;
   ClassDef(RooPosNegBiasEstimator,1) // Real-valued function of other RooAbsArgs calculated by a TFormula expression
 };
 

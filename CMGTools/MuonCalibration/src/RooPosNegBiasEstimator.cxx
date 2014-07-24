@@ -14,24 +14,20 @@
 ClassImp(RooPosNegBiasEstimator)
 
 //_____________________________________________________________________________
-  RooPosNegBiasEstimator::RooPosNegBiasEstimator(const char *name, const char *title,RooAbsReal& _bias, int npos,  const Double_t * pos, int nneg, const Double_t * neg):
+  RooPosNegBiasEstimator::RooPosNegBiasEstimator(const char *name, const char *title,RooAbsReal& _bias, const RooDataSet* pos, const RooDataSet* neg,const char* var1, const char* var2):
     RooAbsReal(name,title),
     bias("bias","Observable",this,_bias)
 {  
   // Constructor with formula expression and list of input variables
 
-
-  
-  for ( int i=0;i<npos;++i)
-    posVector.push_back(pos[i]);
-  for ( int i=0;i<nneg;++i)
-    negVector.push_back(neg[i]);
-
-  //sort the vectors
-  std::sort(posVector.begin(),posVector.end());
-  std::sort(negVector.begin(),negVector.end());
-
-
+  for (int i=0;i<pos->numEntries();++i) {
+    posVector.push_back(((RooRealVar*)pos->get(i)->find(var1))->getVal());
+    posWeights.push_back(pos->weight());
+  }
+  for (int i=0;i<neg->numEntries();++i) {
+    negVector.push_back(((RooRealVar*)neg->get(i)->find(var2))->getVal());
+    negWeights.push_back(neg->weight());
+  }
   
 }
 
@@ -46,7 +42,9 @@ RooPosNegBiasEstimator::RooPosNegBiasEstimator(const RooPosNegBiasEstimator& oth
 {
   posVector = other.posVector;
   negVector = other.negVector;
-
+  posWeights = other.posVector;
+  negWeights = other.negVector;
+  
   // Copy constructor
 }
 
@@ -76,23 +74,20 @@ Double_t RooPosNegBiasEstimator::evaluate() const
 Double_t RooPosNegBiasEstimator::getProbability() const
 {
 
-  std::vector<double> posNew; 
-  std::vector<double> negNew; 
-  TH1F * hPos = new TH1F("pos","pos",100,0.005,0.05);
-  TH1F * hNeg = new TH1F("neg","neg",100,0.005,0.05);
+  TH1F * hPos = new TH1F("pos","pos",25,0.005,0.05);
+  hPos->Sumw2();
+  TH1F * hNeg = new TH1F("neg","neg",25,0.005,0.05);
+  hNeg->Sumw2();
 
   for (unsigned int i=0;i<posVector.size();++i) {
-    hPos->Fill(posVector.at(i)+Double_t(bias));
-    posNew.push_back(posVector.at(i)+Double_t(bias));
-
+    hPos->Fill(posVector[i]+Double_t(bias),posWeights[i]);
   }
   for (unsigned int j=0;j<negVector.size();++j) {
-    hNeg->Fill(negVector.at(j)-Double_t(bias));
-    negNew.push_back(negVector.at(j)-Double_t(bias));
+    hNeg->Fill(negVector[j]-Double_t(bias),negWeights[j]);
   }
   
   //  double prob = TMath::KolmogorovTest(posVector.size(),posNew.data(),negVector.size(),negNew.data(),"");
-  double prob = hPos->Chi2Test(hNeg);
+  double prob = hPos->Chi2Test(hNeg,"WW");
   delete hPos;
   delete hNeg;
   return prob;

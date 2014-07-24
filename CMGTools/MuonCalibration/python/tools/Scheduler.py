@@ -34,7 +34,7 @@ from CMGTools.MuonCalibration.tools.LineshapeFitter import LineshapeFitter
 fitter = LineshapeFitter(w)
 fitter.load()
 (hintResult,fitResult) = fitter.fit('model',w.data('data'),False,0)
-#f.cd()
+f.cd()
 #frame=w.var('massRaw').frame()
 #w.data('data').plotOn(frame)
 #w.pdf('model').plotOn(frame)
@@ -74,7 +74,7 @@ f.Close()
             f1.close()
             os.chdir(self.dir)
             os.system('chmod +x job{p}_{n}.sh'.format(p=chunk[0],n=chunk[-1]))
-            os.system('bsub -q {queue} -oo joblog.txt job{p}_{n}.sh '.format(queue=queue,p=chunk[0],n=chunk[-1]))
+            os.system('bsub -q {queue} -oo joblog{p}_{n}.txt job{p}_{n}.sh '.format(queue=queue,p=chunk[0],n=chunk[-1]))
 
             os.chdir(cwd)
 
@@ -95,9 +95,26 @@ f.Close()
             f1.close()
             os.chdir(self.dir)
             os.system('chmod +x job{p}_{n}.sh'.format(p=chunk[0],n=chunk[-1]))
+            print 'RUNNING job' 
             os.system('./job{p}_{n}.sh '.format(p=chunk[0],n=chunk[-1]))
 
             os.chdir(cwd)
+
+    def fakeSubmit(self):
+        cwd = os.getcwd()
+        #first make all python files!
+        for i,file in self.inputFiles.iteritems():
+            pyScript = self.makePyScript(file,i)
+            f2 = open(self.dir+'/job{p}.py'.format(p=i),'w')
+            f2.write(pyScript)
+            f2.close()
+        #next make all exec files    
+        for chunk in self.chunks(list(self.inputFiles),self.filesPerJob):
+            f1 = open(self.dir+'/job{p}_{n}.sh'.format(p=chunk[0],n=chunk[-1]),'w')
+            execScript = self.makeExecScript(chunk)
+            f1.write(execScript)
+            f1.close()
+
 
 
     

@@ -187,7 +187,7 @@ class PartitionMap(object):
         self.map.GetBinXYZ(bin,binC,binEta,binPhi)
         return (self.map.GetZaxis().GetBinLowEdge(binPhi),self.map.GetZaxis().GetBinUpEdge(binPhi))
     
-    def recalibrate(self,data,what = 'C',calib = 'sum'):
+    def recalibrate(self,data,what = 'C',calib = 'sum',leg=2):
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
@@ -205,11 +205,183 @@ class PartitionMap(object):
 
 
             if calib =="sum":
-                line.find('curvRaw1').setVal(line.find('curvRaw1').getVal()+factor1)
-                line.find('curvRaw2').setVal(line.find('curvRaw2').getVal()+factor2)
+                valNew1 = line.find('curvRaw1').getVal()+factor1
+                valNew2 = line.find('curvRaw2').getVal()+factor2
             elif calib =="prod":
-                line.find('curvRaw1').setVal(line.find('curvRaw1').getVal()*factor1)
-                line.find('curvRaw2').setVal(line.find('curvRaw2').getVal()*factor2)
+                valNew1 = line.find('curvRaw1').getVal()*factor1
+                valNew2 = line.find('curvRaw2').getVal()*factor2
+            elif calib =="sum2":
+                valNew1 = line.find('curvRaw1').getVal()*(1+factor1*line.find('curvRaw1').getVal())
+                valNew2 = line.find('curvRaw2').getVal()*(1+factor2*line.find('curvRaw2').getVal())
+            if leg==0 or leg ==2:
+                line.find('curvRaw1').setVal(valNew1)
+            if leg==1 or leg ==2:
+                line.find('curvRaw2').setVal(valNew2)
+
+            #recalculate the mass
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   0.1056583715)
+            line.find('massRaw').setVal((v1+v2).M())
+
+            newData.add(line)
+
+        return newData
+
+
+    def recalibrateGlobal(self,factor):
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
+            valNew1 = line.find('curvRaw1').getVal()*factor
+            valNew2 = line.find('curvRaw2').getVal()*factor
+            #recalculate the mass
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   0.1056583715)
+            line.find('massRaw').setVal((v1+v2).M())
+
+            newData.add(line)
+
+        return newData
+
+
+    def recalibrateBoth(self,data,leg=2):
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
+
+            bin1 = self.binFromVals(line.find('curvRaw1').getVal(),
+                                    line.find('etaRaw1').getVal(),
+                                    line.find('phiRaw1').getVal())
+            
+            Cpos = self.getData('Cpos',bin1)
+            Upos = self.getData('Upos',bin1)
+            
+            bin2 = self.binFromVals(line.find('curvRaw2').getVal(),
+                                    line.find('etaRaw2').getVal(),
+                                    line.find('phiRaw2').getVal())
+            
+            Cneg = self.getData('Cneg',bin2)
+            Uneg = self.getData('Uneg',bin2)
+            if leg ==0 or leg==2:
+                valNew1 = line.find('curvRaw1').getVal()*Upos+Cpos
+                line.find('curvRaw1').setVal(valNew1)
+            if leg ==1 or leg==2:
+                valNew2 = line.find('curvRaw2').getVal()*Uneg+Cneg
+                line.find('curvRaw2').setVal(valNew2)
+
+            #recalculate the mass
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   0.1056583715)
+            line.find('massRaw').setVal((v1+v2).M())
+
+            newData.add(line)
+
+        return newData
+
+
+    def recalibrateTriple(self,data,leg=2):
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
+
+            bin1 = self.binFromVals(line.find('curvRaw1').getVal(),
+                                    line.find('etaRaw1').getVal(),
+                                    line.find('phiRaw1').getVal())
+            
+            Apos = self.getData('A',bin1)
+            Bpos = self.getData('B',bin1)
+            Mpos = self.getData('M',bin1)
+            
+            bin2 = self.binFromVals(line.find('curvRaw2').getVal(),
+                                    line.find('etaRaw2').getVal(),
+                                    line.find('phiRaw2').getVal())
+
+            Aneg = self.getData('A',bin2)
+            Bneg = self.getData('B',bin2)
+            Mneg = self.getData('M',bin2)
+            
+            c1 = line.find('curvRaw1').getVal()
+            c2 = line.find('curvRaw2').getVal()
+
+            if leg ==0 or leg==2:
+                valNew1 = (Apos-1.0)*c1 + c1/(1+Mpos*c1)+Bpos
+                line.find('curvRaw1').setVal(valNew1)
+            if leg ==1 or leg==2:
+                valNew2 = (Aneg-1.0)*c2 + c2/(1+Mneg*c2)-Bneg
+                line.find('curvRaw2').setVal(valNew2)
+
+            #recalculate the mass
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                                   line.find('etaRaw1').getVal(),
+                                   line.find('phiRaw1').getVal(),
+                                   0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                                   line.find('etaRaw2').getVal(),
+                                   line.find('phiRaw2').getVal(),
+                                   0.1056583715)
+            line.find('massRaw').setVal((v1+v2).M())
+
+            newData.add(line)
+
+        return newData
+
+
+    def recalibrateBothMEV(self,data,leg=2):
+        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+        for evt in range(0,data.numEntries()):
+            line = data.get(evt)
+
+            bin1 = self.binFromVals(line.find('curvRaw1').getVal(),
+                                    line.find('etaRaw1').getVal(),
+                                    line.find('phiRaw1').getVal())
+            
+            Cpos = self.getData('Cpos',bin1)
+            Upos = self.getData('Upos',bin1)
+            
+            bin2 = self.binFromVals(line.find('curvRaw2').getVal(),
+                                    line.find('etaRaw2').getVal(),
+                                    line.find('phiRaw2').getVal())
+            
+            Cneg = self.getData('Cneg',bin2)
+            Uneg = self.getData('Uneg',bin2)
+            if leg ==0 or leg==2:
+                p = 1./line.find('curvRaw1').getVal()+Upos
+                valNew1 = 1./p+Cpos
+                line.find('curvRaw1').setVal(valNew1)
+            if leg ==1 or leg==2:
+                p = 1./line.find('curvRaw2').getVal()+Uneg
+                valNew2 = 1/p+Cneg
+                line.find('curvRaw2').setVal(valNew2)
 
             #recalculate the mass
             v1=ROOT.TLorentzVector()
@@ -234,6 +406,15 @@ class PartitionMap(object):
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
+
+            bin1 = self.binFromVals(line.find('curvRaw1').getVal(),
+                                    line.find('etaRaw1').getVal(),
+                                    line.find('phiRaw1').getVal())
+            
+            bin2 = self.binFromVals(line.find('curvRaw2').getVal(),
+                                    line.find('etaRaw2').getVal(),
+                                    line.find('phiRaw2').getVal())
+
             factor1 = self.getData('Rpos',bin1)
             factor2 = self.getData('Rneg',bin2)
             line.find('massErrRaw1').setVal(line.find('massErrRaw1').getVal()*factor1)
@@ -246,7 +427,7 @@ class PartitionMap(object):
 
 
 
-    def smear(self,data,w,amount = 0.01):
+    def smear(self,data,amount = 0.01):
         random = ROOT.TRandom3(101082)
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):

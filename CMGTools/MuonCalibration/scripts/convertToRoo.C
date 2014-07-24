@@ -1,7 +1,7 @@
 using namespace RooFit;
 
 
-void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false) {
+void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false,bool isDATA=false) {
 
   TFile * f = new TFile(file);
   TTree  *t = f->Get(tree);
@@ -48,11 +48,10 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
 
   newtree->SetBranchAddress(TString::Format("%s_pt",muon1),&pt1);
   newtree->SetBranchAddress(TString::Format("%s_pt",muon2),&pt2);
-  if (!isGEN) {
+  if ((!isGEN) && (!isDATA)) {
     newtree->SetBranchAddress("MuPosGenStatus1_pt",&ptgen1);
     newtree->SetBranchAddress("MuNegGenStatus1_pt",&ptgen2);
   }
-  newtree->SetBranchAddress(TString::Format("%s_pt",muon2),&pt2);
   newtree->SetBranchAddress(TString::Format("%s_eta",muon1),&eta1);
   newtree->SetBranchAddress(TString::Format("%s_eta",muon2),&eta2);
   newtree->SetBranchAddress(TString::Format("%s_phi",muon1),&phi1);
