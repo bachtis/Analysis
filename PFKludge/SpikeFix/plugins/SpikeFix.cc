@@ -82,8 +82,8 @@ SpikeFix::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    Handle<reco::PFCandidateCollection> pfH;
    iEvent.getByLabel("particleFlow",pfH);
 
-   Handle<reco::PFJetCollection> pfJH;
-   iEvent.getByLabel("ak5PFJets",pfJH);
+   //   Handle<reco::PFJetCollection> pfJH;
+   //   iEvent.getByLabel("ak5PFJets",pfJH);
 
    Handle<reco::CaloJetCollection> caloJH;
    iEvent.getByLabel("ak5CaloJets",caloJH);
@@ -93,37 +93,40 @@ SpikeFix::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    for (auto cand: *pfH) {
      
-     if (cand.particleId()==5 && fabs(cand.eta()) >2.85  && fabs(cand.eta())<2.95) {
+     if (cand.pdgId()!=22 &&cand.charge()==0 && fabs(cand.eta()) >2.85  && fabs(cand.eta())<2.95) {
        //find the nearest PF jet and calojet
-       float hcalPF=0.0;
-       float hfPF=0.0;
+       //       float hcalPF=0.0;
+       //       float hfPF=0.0;
        float hcalCalo=0.0;
-       float hfCalo=0.0;
+       //       float hfCalo=0.0;
        
        double dr = 1000.0;
 
-       for (auto jet : *pfJH) {
-	 double delta = deltaR(cand.eta(),cand.phi(),jet.eta(),jet.phi());
-	 if (delta<0.1 && delta<dr) {
-	   dr=delta;
-	   hcalPF = jet.neutralHadronEnergy();
-	   hfPF = jet.HFHadronEnergy();
-	 }
-       }
+       //       for (auto jet : *pfJH) {
+       //	 double delta = deltaR(cand.eta(),cand.phi(),jet.eta(),jet.phi());
+       //	 if (delta<0.4 && delta<dr) {
+       //	   dr=delta;
+       //	   hcalPF = jet.neutralHadronEnergy();
+       //	   //	   hfPF = jet.HFHadronEnergy();
+       //	 }
+       //       }
        dr=1000.0;
        for (auto jet : *caloJH) {
 	 double delta = deltaR(cand.eta(),cand.phi(),jet.eta(),jet.phi());
-	 if (delta<0.1 && delta<dr) {
+	 if (delta<0.4 && delta<dr) {
 	   dr=delta;
-	   hcalCalo = jet.hadEnergyInHE();
-	   hfCalo = jet.hadEnergyInHF();
+	   //	   hcalCalo = jet.hadEnergyInHE();
+	   hcalCalo = jet.maxEInHadTowers();
+	   //	   hfCalo = jet.hadEnergyInHF();
 	 }
        }
 
        float scaleFactor =1.0;
 
-       if(hcalPF>0.0) {
-	 scaleFactor = (hcalCalo+hfCalo-hfPF)/hcalPF;
+       //       if(hcalPF>0.0) {
+       if(cand.rawHcalEnergy()>0.0) {
+	 //	 scaleFactor = (hcalCalo+hfCalo-hfPF)/hcalPF;
+	 scaleFactor = (hcalCalo)/cand.rawHcalEnergy();
        }
 
        reco::PFCandidate c = cand;
