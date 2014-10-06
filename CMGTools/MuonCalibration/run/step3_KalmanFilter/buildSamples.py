@@ -3,7 +3,7 @@ from defs import *
 print 'This step is needed only for data to apply the bfield map corrections'
 
 def recalibrateMap(data):
-    f=ROOT.TFile('../0_magneticfieldmap/mapCalibration.root')
+    f=ROOT.TFile('../step0_magneticMap/mapCalibration.root')
     h = f.Get('mapCorrection')
     newData = ROOT.RooDataSet(data.GetName()+'cal','',data.get())
 

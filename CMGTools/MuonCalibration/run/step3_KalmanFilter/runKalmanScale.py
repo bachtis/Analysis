@@ -194,9 +194,10 @@ def jacobian(line,state):
 
 
 
-calibrator = KalmanCalibrator(infos,'kalmanCalibration_mc_new.root')
-calibrator.loadJPsiMatrix('../1_0_jpsi_kalman_input/kalmanTargetJpsi_nobkg.root')
-calibrator.loadZMatrix('../1_1_z_kalman_input/kalmanTargetZ.root')
+
+calibrator = KalmanCalibrator(infos,'kalmanScale_mc.root')
+calibrator.loadJPsiMatrix('../step1_KalmanInput_Jpsi/kalmanTargetJpsi_nobkg.root')
+calibrator.loadZMatrix('../step2_KalmanInput_Z/kalmanTargetZ.root')
 
 #dataZ = dataZ.reduce(ROOT.RooFit.EventRange(0,150000))
 
