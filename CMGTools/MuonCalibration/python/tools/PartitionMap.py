@@ -459,11 +459,19 @@ class PartitionMap(object):
             errx = 2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
             erry = 2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
 
+            
+#            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal()
+            c1 = line.find('curvRaw1').getVal()+random.Gaus(shift,errx)
+            c2 = line.find('curvRaw2').getVal()+random.Gaus(shift,erry)
 
-#            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
-
-            line.find('curvRaw1').setVal(line.find('curvRaw1').getVal()+random.Gaus(shift,errx))
-            line.find('curvRaw2').setVal(line.find('curvRaw2').getVal()+random.Gaus(shift,erry))
+            if c1<=0:
+                c1=1e-19
+            if c2<=0:
+                c2=1e-19
+            
+            line.find('curvRaw1').setVal(c1)
+            line.find('curvRaw2').setVal(c2)
+#            print 'after',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),errx,erry
 
             v1=ROOT.TLorentzVector()
             v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
@@ -479,7 +487,6 @@ class PartitionMap(object):
 
             line.find('massRaw').setVal((v1+v2).M())
 
-#            print 'after',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
             
             newData.add(line)
 

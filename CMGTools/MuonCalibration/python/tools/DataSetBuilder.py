@@ -10,6 +10,12 @@ class DataSetBuilder (object):
         f = ROOT.TFile(file)
         datas=f.Get(dataset)
         self.cache = ROOT.TFile('__cacheE__'+str(datetime.datetime.now().time())+'.root','RECREATE')
+
+        if smear:
+            datas=pmap.smearEbE2D(datas,self.w)
+
+
+
         limits = self.map.limits()
         cut1="curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=limits['curv'][0],curvUp=limits['curv'][1],etaDown=limits['eta'][0],etaUp=limits['eta'][1],phiDown=limits['phi'][0],phiUp=limits['phi'][1])
         cut2="curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=limits['curv'][0],curvUp=limits['curv'][1],etaDown=limits['eta'][0],etaUp=limits['eta'][1],phiDown=limits['phi'][0],phiUp=limits['phi'][1])
@@ -48,8 +54,6 @@ class DataSetBuilder (object):
         self.tree.get().find('phiRaw2').setMin(limits['phi'][0])
         self.tree.get().find('phiRaw2').setMax(limits['phi'][1])
 
-        if smear:
-            self.tree=pmap.smearEbE2D(self.tree,self.w)
 #            self.unsmearedTree = self.tree
 #            self.tree=pmap.smear2D(self.tree,self.w,0.01)
 
@@ -293,6 +297,10 @@ class DataSetBuilder (object):
         self.statistics()
 
 
+
+
+
+
     def buildAveragePt(self,max=-1,exclusive=0):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
@@ -357,42 +365,39 @@ class DataSetBuilder (object):
         self.statistics()
 
 
-    def buildFast(self,max=-1):
+    def buildVsDiLepton(self,maxx=-1):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
                     bin = self.map.bin(i,j,k)
                     self.positiveSamples[bin] = ROOT.RooDataSet("pos_"+str(bin),"",self.tree.get())
                     self.negativeSamples[bin] = ROOT.RooDataSet("neg_"+str(bin),"",self.tree.get())
+
                     
         for event in range(0,self.tree.numEntries()):
             line = self.tree.get(event)
-            for i in range(1,self.map.bins_curv()+1):
-                for j in range(1,self.map.bins_eta()+1):
-                    for k in range(1,self.map.bins_phi()+1):
-                        bin = self.map.bin(i,j,k)
-                        curvDown,curvUp = self.map.boundaries_curv(bin)
-                        etaDown,etaUp = self.map.boundaries_eta(bin)
-                        phiDown,phiUp = self.map.boundaries_phi(bin)
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                            line.find('etaRaw1').getVal(),
+                            line.find('phiRaw1').getVal(),
+                            0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                            line.find('etaRaw2').getVal(),
+                            line.find('phiRaw2').getVal(),
+                            0.1056583715)
+            
+            v = v1+v2
 
-                        curv1 = line.find("curvRaw1").getVal()
-                        eta1  = line.find("etaRaw1").getVal()
-                        phi1  = line.find("phiRaw1").getVal()
-                        curv2 = line.find("curvRaw2").getVal()
-                        eta2  = line.find("etaRaw2").getVal()
-                        phi2  = line.find("phiRaw2").getVal()
+            bin = self.map.binFromVals(1/v.Pt(),v.Eta(),v.Phi())
 
-
-                        if curv1>curvDown and curv1<curvUp and \
-                           eta1>etaDown and eta1<etaUp and \
-                           phi1>phiDown and phi1<phiUp:
-                            if max<0 or self.positiveSamples[bin].numEntries()<max:
-                                self.positiveSamples[bin].add(line)
-                        if curv2>curvDown and curv2<curvUp and \
-                           eta2>etaDown and eta2<etaUp and \
-                           phi2>phiDown and phi2<phiUp:
-                            if max<0 or self.negativeSamples[bin].numEntries()<max:
-                                self.negativeSamples[bin].add(line)
+            if not (bin in self.positiveSamples.keys()):
+                print 'WILL REMOVE EVENT',1/v.Pt(),v.Eta(),v.Phi()
+                continue
+            if self.positiveSamples[bin].numEntries()<maxx or maxx<0:
+                self.positiveSamples[bin].add(line)
+                self.negativeSamples[bin].add(line)
         self.cache.Close()
         self.statistics()
 

@@ -63,17 +63,20 @@ class LineshapeFitter(object):
 
     def buildZModel(self,name, var,dataset):
         self.w.factory('scale[1.0,0.995,1.005]')
-        self.w.factory('error1[1,0.5,2.0]')
-        self.w.factory('error2[0.0]')
+        self.w.factory('error1[1,0.8,1.5]')
+        self.w.factory('error2[1.0,0.8,1.5]')
         self.poi.append('scale')
         
-#        pdf = ROOT.RooGaussianSumPdfWithSigma(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw','massErrRaw')
-        getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdf.Class(),1)
+#        pdf = ROOT.RooGaussianSumPdfDouble(name,name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
+        getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdfWithSigma2.Class(),1)
 
-        pdf = ROOT.RooGaussianSumPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
+#        pdf = ROOT.RooGaussianSumPdfDouble(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
+
+
+        pdf = ROOT.RooGaussianSumPdfWithSigma2(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw','massErrRaw1','massErrRaw2')
         getattr(self.w,'import')(pdf)
-        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,0])')
-        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
+        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,0.0])')
+        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[0,100000]*'+name+'Bkg)')
         self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
 
 
@@ -359,16 +362,17 @@ class LineshapeFitter(object):
 
     def buildJModelAL(self,name, var,dataset):
         self.w.factory('scale[1.0,0.995,1.005]')
-        self.w.factory('error1[0.01,0.001,0.2]')
-        self.w.factory('error2[0.0]')
+        self.w.factory('error1[1.0,0.5,1.5]')
+        self.w.factory('error2[1,0.5,1.5]')
         self.poi.append('scale')
         
 #        pdf = ROOT.RooGaussianSumPdfWithSigma(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw','massErrRaw')
-        getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdf.Class(),1)
+        getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdfWithSigma2.Class(),1)
 
-        pdf = ROOT.RooGaussianSumPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
+        pdf = ROOT.RooGaussianSumPdfWithSigma2(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw','massErrRaw1','massErrRaw2')
+#        pdf = ROOT.RooGaussianSumPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
         getattr(self.w,'import')(pdf)
-        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,0])')
+        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,5])')
         self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
         self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
 

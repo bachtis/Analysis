@@ -6,7 +6,7 @@ class MCClosureTools (object):
 
 
     def loop(self,sign,data):
-        h = ROOT.TH1F("res","res",500,-0.003,0.003)
+        h = ROOT.TH1F("res","res",500,-0.005,0.005)
         
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
@@ -17,7 +17,7 @@ class MCClosureTools (object):
                 curv = 'curvRaw2'
                 gencurv = 'curvGenRaw2'
                 
-            h.Fill(line.find(gencurv).getVal()-line.find(curv).getVal())
+            h.Fill((1./line.find(gencurv).getVal()-1./line.find(curv).getVal())*line.find(gencurv).getVal())
         return h
 
     def loopMass(self,sign,data):

@@ -1,7 +1,7 @@
 using namespace RooFit;
 
 
-void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false,bool isDATA=false) {
+void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false,bool isDATA=false,int min=0, int max=-1) {
 
   TFile * f = new TFile(file);
   TTree  *t = f->Get(tree);
@@ -19,6 +19,7 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   w->factory("massErrRaw2[1.0,0,30.]");
   w->factory("muMass[0.1056583715]");
   w->factory("massRaw[0,1000]");
+  w->factory("eta[-6,6]");
 
 
   TFile * cache = new TFile("__cacheR__.root","RECREATE");
@@ -36,6 +37,7 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   set.add(*w->var("massErrRaw"));
   set.add(*w->var("curvGenRaw1"));
   set.add(*w->var("curvGenRaw2"));
+  set.add(*w->var("eta"));
 
 
 
@@ -62,8 +64,14 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
 
   TLorentzVector *v1 = new TLorentzVector ();
   TLorentzVector *v2 = new TLorentzVector ();
+
+  int lim=0;
+  if (max<0 || max>newtree->GetEntries())
+    lim=newtree->GetEntries();
+  else
+    lim=max;
   
-  for (Int_t i=0;i<newtree->GetEntries();++i) {
+  for (Int_t i=min;i<lim;++i) {
     newtree->GetEntry(i);
 
     w->var("curvRaw1")->setVal(1./pt1);
@@ -89,6 +97,7 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
  
 
     w->var("massRaw")->setVal(((*v1)+(*v2)).M());
+    w->var("eta")->setVal(((*v1)+(*v2)).Eta());
 
 
     //Event by event error
@@ -148,6 +157,9 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
 
     ////////////////////
       data->add(set);
+      if (max >0 && i==max)
+	break;
+      
       
   }
 
