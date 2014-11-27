@@ -6,7 +6,8 @@
 #include "../interface/RooGaussianSumPdfWithSigma2.h"
 #include "../interface/RooGaussianSumPdf2D.h"
 #include "../interface/RooPosNegBiasEstimator.h"
-#include "../interface/MuonCalibrator.h"
+#include "../interface/RooSplineND.h"
+#include "../interface/SampleSmearing.h"
 
 #ifdef __CINT__
 #pragma link off all globals;
@@ -20,7 +21,7 @@
 #pragma link C++ class Roo3DMapVar+;
 #pragma link C++ class Roo2DMapVar+;
 #pragma link C++ class RooPosNegBiasEstimator+;
-#pragma link C++ class MuonCalibrator+;
-
+#pragma link C++ class RooSplineND+;
+#pragma link C++ class SampleSmearing+;
 #endif
 
