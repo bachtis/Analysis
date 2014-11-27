@@ -427,42 +427,19 @@ class PartitionMap(object):
 
 
 
-    def smear(self,data,amount = 0.01):
-        random = ROOT.TRandom3(101082)
-        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
-        for evt in range(0,data.numEntries()):
-            line = data.get(evt)
-            line.find('massRaw').setVal(line.find('massRaw').getVal()+random.Gaus(0.0,amount*line.find('massRaw').getVal()))
-            newData.add(line)
 
-        return newData
-
-
-
-    def smearEbE(self,data,w):
-        random = ROOT.TRandom3(101082)
-        newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
-        for evt in range(0,data.numEntries()):
-            line = data.get(evt)
-            err = line.find('massErrRaw').getVal()
-            line.find('massRaw').setVal(line.find('massRaw').getVal()+random.Gaus(0.0,err))
-            newData.add(line)
-
-        return newData
-
-    def smearEbE2D(self,data,w,shift = 0.0):
+    def smearEbE2D(self,data,w,shift = 0.0,errorScale=1.0):
         random = ROOT.TRandom3(101082)
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
 
-            errx = 2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
-            erry = 2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
-
+            errx = errorScale*2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
+            erry = errorScale*2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
             
 #            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal()
-            c1 = line.find('curvRaw1').getVal()+random.Gaus(shift,errx)
-            c2 = line.find('curvRaw2').getVal()+random.Gaus(shift,erry)
+            c1 = shift*line.find('curvRaw1').getVal()+random.Gaus(0.0,errx)
+            c2 = shift*line.find('curvRaw2').getVal()+random.Gaus(0.0,erry)
 
             if c1<=0:
                 c1=1e-19
@@ -493,7 +470,7 @@ class PartitionMap(object):
         return newData
 
 
-    def smear2D(self,data,w,resolution=0.01):
+    def smear2D(self,data,w,resolution=0.02):
         random = ROOT.TRandom3(101082)
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
         for evt in range(0,data.numEntries()):

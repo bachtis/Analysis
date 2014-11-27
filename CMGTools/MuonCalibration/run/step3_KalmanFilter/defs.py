@@ -6,7 +6,6 @@ ROOT.gSystem.Load("libCMGToolsMuonCalibration")
 from CMGTools.MuonCalibration.tools.workspaceTools import prepareWorkspace
 from CMGTools.MuonCalibration.tools.PartitionMap import PartitionMap
 from CMGTools.MuonCalibration.tools.DataSetBuilder import DataSetBuilder
-from CMGTools.MuonCalibration.tools.KalmanCalibrator  import *
 
 
 #create a MC dataset for the lineshape

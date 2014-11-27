@@ -103,7 +103,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
         
 
 
-    def updateJPSI(self,data,EV):
+    def updateJPSI(self,data,EV,weight=1.0):
         if self.jpsiMatrix is None:
             print 'MATRIX FOR J/psi not found'
             return
@@ -137,7 +137,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
             z[0] = line.find('massRaw').getVal()/mean
             R=ROOT.TMatrixD(1,1)
             error = line.find('massErrRaw').getVal()/mean
-            R[0][0] =error*error 
+            R[0][0] =error*error/(weight*weight) 
 
             H= self.jacobian(line,self.state)
             h =self.h(line,self.state) 
@@ -155,7 +155,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
     
 
 
-    def updateZ(self,data,EV):
+    def updateZ(self,data,EV,weight=1.0):
 
         if self.zMatrix is None:
             print 'MATRIX FOR Z not found'
@@ -192,7 +192,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
             z=ROOT.TVectorD(1)
             z[0] = line.find('massRaw').getVal()/mean
             R=ROOT.TMatrixD(1,1)
-            R[0][0] = (line.find('massErrRaw').getVal()*line.find('massErrRaw').getVal())/(mean*mean) + line.find('massRaw').getVal()*line.find('massRaw').getVal()*width*width/(mean*mean*mean*mean)
+            R[0][0] = ((line.find('massErrRaw').getVal()*line.find('massErrRaw').getVal())/(mean*mean) + line.find('massRaw').getVal()*line.find('massRaw').getVal()*width*width/(mean*mean*mean*mean))/(weight*weight)
 
 
             H= self.jacobian(line,self.state)
@@ -210,14 +210,10 @@ class KalmanCalibrator(SimpleKalmanFilter):
 
         self.save(str(EV))    
 
-            
 
-            
-              
-              
-                          
-            
-            
+
+
+
             
         
 

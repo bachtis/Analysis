@@ -3,10 +3,8 @@ import numpy
 import math
 
 class MCClosureTools (object):
-
-
     def loop(self,sign,data):
-        h = ROOT.TH1F("res","res",500,-0.005,0.005)
+        h = ROOT.TH1F("res","res",500,0.97,1.03)
         
         for evt in range(0,data.numEntries()):
             line = data.get(evt)
@@ -17,11 +15,13 @@ class MCClosureTools (object):
                 curv = 'curvRaw2'
                 gencurv = 'curvGenRaw2'
                 
-            h.Fill((1./line.find(gencurv).getVal()-1./line.find(curv).getVal())*line.find(gencurv).getVal())
+#            h.Fill((1./line.find(gencurv).getVal()-1./line.find(curv).getVal())*line.find(gencurv).getVal())
+            h.Fill((line.find(gencurv).getVal()/line.find(curv).getVal()))
+#            h.Fill((line.find(gencurv).getVal()-line.find(curv).getVal()))
         return h
 
     def loopMass(self,sign,data):
-        h = ROOT.TH1F("res","res",500,0.97,1.03)
+        h = ROOT.TH1F("res","res",500,0.95,1.05)
         
         for evt in range(0,data.numEntries()):
             line=data.get(evt)
@@ -39,7 +39,7 @@ class MCClosureTools (object):
                                    line.find('etaRaw2').getVal(),
                                    line.find('phiRaw2').getVal(),
                                    0.1056583715)
-            h.Fill(line.find("massRaw").getVal()/(v1+v2).M())
+            h.Fill((v1+v2).M()/line.find("massRaw").getVal())
         return h
 
     def loopMassProfile(self,sign,data):
@@ -68,6 +68,8 @@ class MCClosureTools (object):
     def getMeanAndSpreadArithmetic(self,sign,data):
         h = self.loop(sign,data)
         hist=h
+
+#        import pdb;pdb.set_trace()
         return h.GetMean(),h.GetMeanError(),h.GetRMS(),h.GetRMSError()
     def getMeanAndSpreadArithmeticMass(self,sign,data):
         h = self.loopMass(sign,data)

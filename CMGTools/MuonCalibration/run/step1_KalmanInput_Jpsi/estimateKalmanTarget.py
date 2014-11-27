@@ -2,23 +2,29 @@ from defs import *
 
 
 #load the ratio of signal and background and the slopes
-pmap = PartitionMap(curvArr,etaArr,phiArr,"kalmanTargetJpsi.root")
-
-pmap.load('JDataFits.root','slope_fit','slope')
-pmap.load('JDataFits.root','BKGoverSIGNAL_fit','ratio')
-pmap.declareData('mass',0.0)
-
-builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',50000000)
-builder.load("JGEN_Input.root")
-
-w.var('massRaw').setBins(50)
-w.var('massRaw').setMin(2.9)
-w.var('massRaw').setMax(3.3)
-
-w.factory('RooExponential::pdf(massRaw,slope[-1,-8.,10])')
 
 
 def estimate(minMass,maxMass,bkg=True):
+
+    filename="kalmanTargetJpsi_nobkg.root"
+    if  bkg:
+        filename="kalmanTargetJpsi_bkg.root"
+        
+    pmap = PartitionMap(curvArr,etaArr,phiArr,filename)
+
+    pmap.load('JDataFits.root','slope_fit','slope')
+    pmap.load('JDataFits.root','BKGoverSIGNAL_fit','ratio')
+    pmap.declareData('mass',0.0)
+
+    builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',50000000)
+    builder.load("JGEN_Input.root")
+
+    w.var('massRaw').setBins(50)
+    w.var('massRaw').setMin(2.9)
+    w.var('massRaw').setMax(3.3)
+
+    w.factory('RooExponential::pdf(massRaw,slope[-1,-8.,10])')
+
     for bin,data in builder.data('pos').iteritems():
         NSIG = data.numEntries()
         ratio = pmap.getData('ratio',bin)
@@ -34,4 +40,9 @@ def estimate(minMass,maxMass,bkg=True):
         pmap.setData('mass',bin,dataset.mean(w.var('massRaw')),0.0)
           
     pmap.save('fit')      
-          
+
+
+estimate(3.0,3.2,True)          
+estimate(3.0,3.2,False)          
+
+

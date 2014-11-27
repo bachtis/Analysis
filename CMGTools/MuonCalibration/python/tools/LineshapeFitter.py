@@ -14,16 +14,17 @@ class LineshapeFitter(object):
 
 
     def save(self):
-
+        self.w.defineSet('nuisances',','.join(self.nuisances))
         self.w.defineSet('constraints',','.join(self.constraints))
         self.w.defineSet('poi',','.join(self.poi))
         self.w.defineSet('observables',','.join(self.observables))
-        self.w.defineSet('nuisances',','.join(self.nuisances))
 
 
     def load(self):
         for setName in ['constraints','poi','observables','nuisances']:
             set = self.w.set(setName)
+            if set.getSize()==0:
+                continue
             iter=set.createIterator()
             for i in range(0,set.getSize()):
                 arg=iter.Next()
@@ -377,19 +378,25 @@ class LineshapeFitter(object):
         self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
 
 
-    def buildJModelCBParam(self,name):
+    def buildJModelCBParam2(self,name,isMC = False):
+        self.w.factory("a[0.00001,0.0,0.1]")
+        self.w.factory("b[0.00001,0.0,0.1]")
         self.poi.append('a')
         self.poi.append('b')
-        self.poi.append('c')
-        
-        self.w.factory("a[0.0,-0.008,0.008]")
-        self.w.factory("b[0.0,-0.02,0.02]")
-        self.w.factory("c[0.0]")
-        self.w.factory("expr::mass('3.09173281695*sqrt((a+1.0/(1.0+b*curvRaw1)+c/curvRaw1)*(a+1.0/(1.0+b*curvRaw2)-c/curvRaw2))',a,b,c,curvRaw1,curvRaw2)")
-        self.w.factory('RooCBShape::modelSig(massRaw,mass,error[0.01,0.001,0.2],alpha[1,-10,10],n[5,0,10])')
-        self.w.factory('RooExponential::'+name+'Bkg(massRaw,bkgSlope[-1,-8.,5])')
-        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
-        self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
+
+        self.w.factory("expr::sigma('sqrt(a*a/(curvRaw1*curvRaw1*curvRaw1*curvRaw1)+a*a/(curvRaw2*curvRaw2*curvRaw2*curvRaw2)+b*b/(curvRaw1*curvRaw1)+b*b/(curvRaw2*curvRaw2))',a,b,curvRaw1,curvRaw2)")
+        if isMC:
+            postfix=''
+        else:    
+            postfix='Sig'
+
+        self.w.factory('RooCBShape::'+name+postfix+'(massRaw,mass[3.09,3.10],sigma,alpha[1,0.05,20],n[5])')
+        if not isMC:
+            self.w.factory('RooExponential::'+name+'Bkg(massRaw,bkgSlope[-1,-8.,5])')
+            self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
+            self.nuisances.extend(['bkgSlope','NSIG','NBKG','mass'])
+        else:    
+            self.nuisances.extend(['mass'])
 
     def buildJModelCBMAT(self,name):
         self.poi.append('m')
@@ -1339,11 +1346,8 @@ class LineshapeFitter(object):
 #            self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(6,0))
 #            fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.Timer(0),ROOT.RooFit.NumCPU(6,0),ROOT.RooFit.Save(1))
 
-            fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Save(1),ROOT.RooFit.Minos(1),ROOT.RooFit.Strategy(2),ROOT.RooFit.ConditionalObservables(ROOT.RooArgSet(self.w.var("curvRaw1"),self.w.var("curvRaw2")))) 
-
-           
+            fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Save(1),ROOT.RooFit.Minos(1),ROOT.RooFit.Strategy(2),ROOT.RooFit.ConditionalObservables(ROOT.RooArgSet(self.w.var("curvRaw1"),self.w.var("curvRaw2"),self.w.var("massErrRaw1"),self.w.var("massErrRaw2"))))
         self.w.saveSnapshot(snapshot,','.join(self.poi))    
-
         if hintResult is not None:
             print '-------HINT------'
             hintResult.Print()
@@ -1351,7 +1355,8 @@ class LineshapeFitter(object):
         print '-------FINAL RESULT------'
         if fitResult is not None:
             fitResult.Print()
-
+            print '-COVARIANCE-'
+            fitResult.correlationMatrix().Print()
         return (hintResult,fitResult)        
 
 

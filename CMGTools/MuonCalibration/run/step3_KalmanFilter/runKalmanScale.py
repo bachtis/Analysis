@@ -1,21 +1,42 @@
 from defs import *
+from CMGTools.MuonCalibration.tools.KalmanCalibrator  import *
 
 ############################DATA SETS#################################
 
 builder = DataSetBuilder(pmap,w,'JData_Input.root','data',1000000000)
-data = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
+jdata = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
+print 'Jpsi data',jdata.numEntries()
 
-builder2 = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
-data2 = builder2.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
 
-builderZ = DataSetBuilder(pmap,w,'ZMC1_Input.root','data',1000000000)
-dataZ = builderZ.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+builder = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
+jmc = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
+print 'Jpsi MC',jmc.numEntries()
 
-builderZ2 = DataSetBuilder(pmap,w,'ZMC2_Input.root','data',1000000000)
-dataZ2 = builderZ2.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
 
-builderZ3 = DataSetBuilder(pmap,w,'ZData_Input.root','data',1000000000)
-dataZ3 = builderZ3.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+builder = DataSetBuilder(pmap,w,'ZMC1_Input.root','data',1000000000)
+zmc1 = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+print 'ZMC 1 ',zmc1.numEntries()
+
+
+builder = DataSetBuilder(pmap,w,'ZMC2_Input.root','data',1000000000)
+zmc2 = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+print 'ZMC 2 ',zmc2.numEntries()
+
+
+builder = DataSetBuilder(pmap,w,'ZData_Input.root','data',1000000000)
+zdata = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+print 'Z data ',zdata.numEntries()
+
+
+builder= DataSetBuilder(pmap,w,'ZGEN_Input.root','data',1000000000)
+zgen= builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+print 'Z gen ',zgen.numEntries()
+
+builder= DataSetBuilder(pmap,w,'JGEN_Input.root','data',1000000000)
+jgen= builder.tree.reduce('massRaw>3&&massRaw<3.2&&abs(eta)<1.2')
+print 'J gen ',jgen.numEntries()
+
+
 ############################DATA SETS#################################
 
 
@@ -35,7 +56,7 @@ pmap1_10.declareData('K',0.0)
 infos = {}
 infos['A']={'map':pmap1_10,'error':0.005}
 infos['K']={'map':pmap1_10,'error':0.005}
-infos['B']={'map':pmap10_10,'error':50e-6}
+infos['B']={'map':pmap10_10,'error':200e-6}
 infos['M']={'map':pmap10_10,'error':0.015}
 
 
@@ -193,18 +214,25 @@ def jacobian(line,state):
 
 
 
+ 
 
-
-calibrator = KalmanCalibrator(infos,'kalmanScale_mc.root')
+calibrator = KalmanCalibrator(infos,'kalmanScale_gen.root')
 calibrator.loadJPsiMatrix('../step1_KalmanInput_Jpsi/kalmanTargetJpsi_nobkg.root')
 calibrator.loadZMatrix('../step2_KalmanInput_Z/kalmanTargetZ.root')
 
-#dataZ = dataZ.reduce(ROOT.RooFit.EventRange(0,150000))
+#dataZ = dataZ.reduce(ROOT.RooFit.EventRange(0,280610))
+#data2.append(data2_2)
+#data2.append(data2_2)
+#data2.append(data2_2.reduce(ROOT.RooFit.EventRange(0,159895)))
+
 
 calibrator.setModel(h,jacobian)
-calibrator.updateJPSI(data2,1)
-calibrator.updateZ(dataZ,0)
-calibrator.updateZ(dataZ2,0)
+#calibrator.updateZ(dataZ,1)
+calibrator.updateJPSI(jgen,0)
+
+#calibrator.updateZ(dataZ3,1)
+#calibrator.updateJPSI(data,0)
+
 
 
 

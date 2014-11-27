@@ -13,6 +13,7 @@ class DataSetBuilder (object):
 
         if smear:
             datas=pmap.smearEbE2D(datas,self.w)
+#            datas=pmap.smear2D(datas,self.w)
 
 
 
@@ -230,9 +231,9 @@ class DataSetBuilder (object):
         for i in range(0,data.numEntries()):
             line = data.get(i)
             x = line.find(curv).getVal()
-#            resolution = 2*line.find(massErr).getVal()*line.find(curv).getVal()/line.find('massRaw').getVal()
+            resolution = 2*line.find(massErr).getVal()*line.find(curv).getVal()/line.find('massRaw').getVal()
 #            resolution = 0.00022
-            resolution = 0.01*line.find(curv).getVal()
+#            resolution = 0.01*line.find(curv).getVal()
             derivx = self.getDerivativeOverContent(spectrum,x)
             
             line.find(curv).setVal(x+resolution*resolution*derivx)
@@ -400,7 +401,6 @@ class DataSetBuilder (object):
                 self.negativeSamples[bin].add(line)
         self.cache.Close()
         self.statistics()
-
 
 
     def buildPairs(self):

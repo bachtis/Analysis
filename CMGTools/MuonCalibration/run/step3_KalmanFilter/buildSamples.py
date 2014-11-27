@@ -40,12 +40,9 @@ def recalibrateMap(data):
 
 
 
-
 print 'J /psi data'
 builder = DataSetBuilder(pmap,w,'../../data/JDATA.root','data',10000000)
 builder.tree = recalibrateMap(builder.tree)
-builder.tree = builder.tree.reduce('1.0/curvRaw1>4.&& 1.0/curvRaw2>4.') 
-
 f2=ROOT.TFile('JData_Input.root','RECREATE')
 f2.cd()
 builder.tree.Write('data')
@@ -55,8 +52,6 @@ f2.Close()
 print 'J /psi MC'
 
 builder = DataSetBuilder(pmap,w,'../../data/JMC.root','data',10000000)
-builder.tree = builder.tree.reduce('1.0/curvRaw1>4.&& 1.0/curvRaw2>4.') 
-
 f2=ROOT.TFile('JMC_Input.root','RECREATE')
 f2.cd()
 builder.tree.Write('data')
@@ -64,13 +59,11 @@ f2.Close()
 
 
 
-
 print 'Z data'
 
 builder = DataSetBuilder(pmap,w,'../../data/ZDATA.root','data',10000000)
-builder.tree = recalibrateMap(builder.tree)
-builder.tree = builder.tree.reduce('1.0/curvRaw1>10.&& 1.0/curvRaw2>10.&&abs(eta)<5') 
-
+#builder.tree = recalibrateMap(builder.tree)
+builder.tree = builder.tree.reduce('abs(eta)<5') 
 f2=ROOT.TFile('ZData_Input.root','RECREATE')
 f2.cd()
 builder.tree.Write('data')
@@ -80,8 +73,7 @@ f2.Close()
 print 'Z MC1'
 
 builder = DataSetBuilder(pmap,w,'../../data/ZMC1.root','data',10000000)
-builder.tree = builder.tree.reduce('1.0/curvRaw1>4.&& 1.0/curvRaw2>4.&&abs(eta)<5') 
-
+builder.tree = builder.tree.reduce('abs(eta)<5') 
 f2=ROOT.TFile('ZMC1_Input.root','RECREATE')
 f2.cd()
 builder.tree.Write('data')
@@ -91,10 +83,27 @@ f2.Close()
 print 'Z MC2'
 
 builder = DataSetBuilder(pmap,w,'../../data/ZMC2.root','data',10000000)
-builder.tree = builder.tree.reduce('1.0/curvRaw1>4.&& 1.0/curvRaw2>4.&&abs(eta)<5') 
-
+builder.tree = builder.tree.reduce('abs(eta)<5') 
 f2=ROOT.TFile('ZMC2_Input.root','RECREATE')
 f2.cd()
 builder.tree.Write('data')
 f2.Close()
 
+
+print 'Z GEN'
+
+builder = DataSetBuilder(pmap,w,'../../data/ZGEN.root','data',10000000)
+builder.tree = builder.tree.reduce('abs(eta)<5') 
+f2=ROOT.TFile('ZGEN_Input.root','RECREATE')
+f2.cd()
+builder.tree.Write('data')
+f2.Close()
+
+print 'J GEN'
+
+builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',10000000)
+builder.tree = builder.tree.reduce('abs(eta)<5') 
+f2=ROOT.TFile('JGEN_Input.root','RECREATE')
+f2.cd()
+builder.tree.Write('data')
+f2.Close()

@@ -21,7 +21,7 @@ builderS.load("ZGEN_InputSmeared.root")
 
 
 def estimate(minMass,maxMass):
-    for bin,data in builderS.data('pos').iteritems():
+    for bin,data in builder.data('pos').iteritems():
         dataset=data.reduce('massRaw>'+str(minMass)+'&&massRaw<'+str(maxMass))
         pmap.setData('mass',bin,dataset.mean(w.var('massRaw')),0.0)
     for bin,data in builder.data('pos').iteritems():
@@ -31,4 +31,6 @@ def estimate(minMass,maxMass):
     pmap.save('fit')      
           
 
+
+estimate(85.,95.)
 

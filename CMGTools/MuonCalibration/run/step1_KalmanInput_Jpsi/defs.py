@@ -29,9 +29,9 @@ etaArr=[]
 for i in range(0,26):
     etaArr.append(-1.3+2.6*i/25.0)
 
-pmap = PartitionMap(curvArr,etaArr,phiArr,"results.root")
 
 
+pmap = PartitionMap(curvArr,etaArr,phiArr,"")
 
 
 
