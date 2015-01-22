@@ -15,9 +15,9 @@ from CMGTools.MuonCalibration.tools.Scheduler import Scheduler
 w=ROOT.RooWorkspace('w','w')
 prepareWorkspace(w)
 
-w.var('massRaw').setBins(50)
-w.var('massRaw').setMin(2.8)
-w.var('massRaw').setMax(3.4)
+w.var('massRaw').setBins(100)
+w.var('massRaw').setMin(80)
+w.var('massRaw').setMax(120)
 
 
 curvArr=[1/100.,1/5.]
@@ -26,4 +26,10 @@ etaArr = []
 for i in range(0,21):
     etaArr.append(-1.1+2.2*i/20.)
 pmap = PartitionMap(curvArr,etaArr,phiArr,"")
+
+
+
+
+
+
 
