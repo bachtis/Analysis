@@ -1,5 +1,5 @@
 from defs import *
-
+import math
 
 #load the ratio of signal and background and the slopes
 
@@ -17,7 +17,7 @@ def estimate(minMass,maxMass,bkg=True):
     pmap.declareData('mass',0.0)
 
     builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',50000000)
-    builder.load("JGEN_Input.root")
+    builder.load("JGEN.root")
 
     w.var('massRaw').setBins(50)
     w.var('massRaw').setMin(2.9)
@@ -37,7 +37,7 @@ def estimate(minMass,maxMass,bkg=True):
         dataset=dataset.reduce('massRaw>'+str(minMass)+'&&massRaw<'+str(maxMass))
         if not bkg:
             dataset = data.reduce('massRaw>'+str(minMass)+'&&massRaw<'+str(maxMass))
-        pmap.setData('mass',bin,dataset.mean(w.var('massRaw')),0.0)
+        pmap.setData('mass',bin,dataset.mean(w.var('massRaw')),dataset.sigma(w.var('massRaw'))/math.sqrt(dataset.numEntries()))
           
     pmap.save('fit')      
 

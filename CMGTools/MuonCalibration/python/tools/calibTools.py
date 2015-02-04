@@ -1,9 +1,8 @@
 import ROOT
-ROOT.gSystem.Load("libCMGToolsKalmanCalibration")
-
-
-def correctDataSet(data,isData,ptCalib=False,errCalib=False,bOnlyCalib=False):
+import math
+def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=False,siliconOnlyErrCalib=False):
     calibrator = ROOT.KalmanCalibrator(isData)
+    newData = ROOT.RooDataSet("data","data",data.get())
     for i in range(0,data.numEntries()):
         line =data.get(i)
         pt1 = 1./line.find('curvRaw1').getVal()
@@ -14,6 +13,11 @@ def correctDataSet(data,isData,ptCalib=False,errCalib=False,bOnlyCalib=False):
         eta2 = line.find('etaRaw2').getVal()
         phi2 = line.find('phiRaw2').getVal()
         err2=line.find('massErrRaw2').getVal()
+        m=line.find('massRaw').getVal()
+        if errCalib:    
+            err1 = calibrator.getCorrectedError(pt1,eta1,err1/m,siliconOnlyErrCalib)*m
+            err2 = calibrator.getCorrectedError(pt2,eta2,err2/m,siliconOnlyErrCalib)*m
+        
 
         if bOnlyCalib:
             pt1 = calibrator.getCorrectedPtMag(pt1,eta1,phi1)
@@ -22,14 +26,14 @@ def correctDataSet(data,isData,ptCalib=False,errCalib=False,bOnlyCalib=False):
             if ptCalib:
                 pt1 = calibrator.getCorrectedPt(pt1,eta1,phi1,1)
                 pt2 = calibrator.getCorrectedPt(pt2,eta2,phi2,-1)
-            if errCalib:    
-                err1 = calibrator.getCorrectedError(pt1,eta1,err1)
-                err2 = calibrator.getCorrectedError(pt2,eta2,err2)
+
+
             
         line.find('curvRaw1').setVal(1.0/pt1)
         line.find('curvRaw2').setVal(1.0/pt2)
         line.find('massErrRaw1').setVal(err1)
         line.find('massErrRaw2').setVal(err2)
+        line.find('massErrRaw').setVal(math.sqrt(err1*err1+err2*err2))
 
         #recalculate the mass
         v1=ROOT.TLorentzVector()

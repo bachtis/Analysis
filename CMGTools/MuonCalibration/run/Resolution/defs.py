@@ -10,6 +10,7 @@ from CMGTools.MuonCalibration.tools.PartitionMap import PartitionMap
 from CMGTools.MuonCalibration.tools.DataSetBuilder import DataSetBuilder
 from CMGTools.MuonCalibration.tools.LineshapeFitter import LineshapeFitter
 from CMGTools.MuonCalibration.tools.Scheduler import Scheduler
+from CMGTools.MuonCalibration.tools.Smearing import smearAbsolute,smearEbE2D,smearFlat
 
 #create a MC dataset for the lineshape
 w=ROOT.RooWorkspace('w','w')
@@ -20,16 +21,7 @@ w.var('massRaw').setMin(80)
 w.var('massRaw').setMax(120)
 
 
-curvArr=[1/100.,1/5.]
+curvArr=[1./80. , 1./55.,1./45. , 1./35. ,1./25, 1./16. , 1./14. , 1./12. , 1./10. , 1./8., 1./6.5, 1/5.]
 phiArr=[-math.pi,math.pi]
-etaArr = []
-for i in range(0,21):
-    etaArr.append(-1.1+2.2*i/20.)
+etaArr = [-1.1,-0.9,-0.75,-0.5,-0.25,0.0,0.25,0.5,0.75,0.9,1.1]
 pmap = PartitionMap(curvArr,etaArr,phiArr,"")
-
-
-
-
-
-
-

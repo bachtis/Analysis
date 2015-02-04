@@ -3,27 +3,23 @@ from CMGTools.MuonCalibration.tools.KalmanCalibrator  import *
 
 ############################DATA SETS#################################
 
-builder = DataSetBuilder(pmap,w,'JData_Input.root','data',1000000000)
-jdata = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
-print 'Jpsi data',jdata.numEntries()
+#builder = DataSetBuilder(pmap,w,'JData_Input.root','data',1000000000)
+#jdata = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(rapidity)<1.2')
+#print 'Jpsi data',jdata.numEntries()
 
 
-builder = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
-jmc = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(eta)<1.2')
-print 'Jpsi MC',jmc.numEntries()
+#builder = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
+#jmc = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(rapidity)<1.2')
+#print 'Jpsi MC',jmc.numEntries()
 
 
-builder = DataSetBuilder(pmap,w,'ZMC_Input.root','data',1000000000)
-zmc = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
-print 'ZMC ',zmc.numEntries()
-
-builder = DataSetBuilder(pmap,w,'ZMC2_Input.root','data',1000000000)
-zmc2 = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
-print 'ZMC2 ',zmc2.numEntries()
+#builder = DataSetBuilder(pmap,w,'ZMC_Input.root','data',1000000000)
+#zmc = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(rapidity)<3.2')
+#print 'ZMC ',zmc.numEntries()
 
 
 builder = DataSetBuilder(pmap,w,'ZData_Input.root','data',1000000000)
-zdata = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(eta)<3.2')
+zdata = builder.tree.reduce('massRaw>85&&massRaw<95')
 print 'Z data ',zdata.numEntries()
 
 
@@ -204,18 +200,12 @@ def jacobian(line,state):
     return V
 
 
-
-####################################################################
-
-
-
- 
-
-calibrator = KalmanCalibrator(infos,'kalmanScale_data.root')
+calibrator = KalmanCalibrator(infos,'kalmanScale_data_nounf.root')
 calibrator.loadJPsiMatrix('../step1_KalmanInput_Jpsi/kalmanTargetJpsi_bkg.root')
-calibrator.loadZMatrix('../step2_KalmanInput_Z/kalmanTargetZ.root')
+calibrator.loadZMatrix('kalmanTargetZ.root')
 calibrator.setModel(h,jacobian)
-#calibrator.updateZ(zdata,1)
+
+calibrator.updateZ(zdata,1)
 calibrator.updateJPSI(jdata,0)
 
 

@@ -9,9 +9,8 @@ pmap.declareData('error1',0.00)
 pmap.declareData('error2',0.00)
 builder = DataSetBuilder(pmap,w,'../../data/JDATA.root','data',1000000000)
 builderMC = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',50000000)
-builder.load("JDATA_Input.root")
-#builder.load("samplesGENFull.root")
-builderMC.load("JGEN_Input.root")
+builder.load("JDATA.root")
+builderMC.load("JGEN.root")
 
 def harvest(sched):
     for bin,data in builder.data('pos').iteritems():
@@ -30,7 +29,6 @@ def harvest(sched):
 
 
 def run():
-
     scheduler = Scheduler(['JMASSFits'],1)
        ###create Scheduler here
     for bin,data in builder.data('pos').iteritems():
@@ -39,20 +37,22 @@ def run():
         w.var('massRaw').setBins(50)
         w.var('massRaw').setMin(2.9)
         w.var('massRaw').setMax(3.3)
+
+        data.get().find('massRaw').setBins(50)
+        data.get().find('massRaw').setMin(2.9)
+        data.get().find('massRaw').setMax(3.3)
+
         fitter = LineshapeFitter(w)
         fitter.addObservable('massRaw')
         dataU = data.reduce('massRaw>2.9&&massRaw<3.3')
         dataBinned=builder.convertToBinned(dataU,'massRaw',50)
         lineshape = builderMC.data('pos')[bin].reduce("massRaw>2.8&&massRaw<3.4")
-        fitter.buildJModelAL('model',w.var('massRaw'),lineshape)
+        fitter.buildJModelSimple('model',w.var('massRaw'),lineshape)
         fitter.importData(dataBinned)
         fitter.save()
         w.writeToFile("dataFit_"+str(bin)+".root")
         scheduler.declareJob("dataFit_"+str(bin)+".root",bin)
- 
-#        scheduler.submit('8nh')
     scheduler.submitLOCAL()
-#    sched['pos'].wait()
     harvest(scheduler)
 
 run()

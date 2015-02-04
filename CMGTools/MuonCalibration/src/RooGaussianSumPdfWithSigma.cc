@@ -51,11 +51,14 @@ errors(other.errors)
 Double_t RooGaussianSumPdfWithSigma::evaluate() const
 {
   Double_t arg= 0.0;
+  Double_t error= 0.0;
   Double_t sum=0.0;
   Double_t sumw=0.0;
   
+  
   for (unsigned int i=0;i<masses.size();++i) {
-    arg = (mass-scale*masses[i])/(error1+error2*errors[i]);
+    error = sqrt(errors[i]*errors[i]+error1+error2);
+    arg = (mass-scale*masses[i])/(error);
     sum=sum+weights[i]*exp(-0.5*arg*arg);
     sumw=sumw+weights[i];
   }
@@ -76,11 +79,12 @@ Double_t RooGaussianSumPdfWithSigma::analyticalIntegral(Int_t code, const char* 
   Double_t ret = 0;
   Double_t sumw = 0;
   Double_t xscale = 0.0;
-
+  Double_t error = 0.0;
+  
   for (unsigned int i=0;i<weights.size();++i) {
-    xscale = root2*(error1+error2*errors[i]);
-
-    ret = ret+weights[i]*rootPiBy2*(error1+error2*errors[i])*(RooMath::erf((mass.max(rangeName)-scale*masses[i])/xscale)-RooMath::erf((mass.min(rangeName)-scale*masses[i])/xscale));
+    error = sqrt(errors[i]*errors[i]+error1+error2);
+    xscale = root2*(error);
+    ret = ret+weights[i]*rootPiBy2*(error)*(RooMath::erf((mass.max(rangeName)-scale*masses[i])/xscale)-RooMath::erf((mass.min(rangeName)-scale*masses[i])/xscale));
     sumw=sumw+weights[i];
   }
   return ret/sumw ;

@@ -2,20 +2,14 @@ import ROOT
 import os
 import array
 import datetime
-
+import copy
 class DataSetBuilder (object):
-    def __init__(self,pmap,workspace,file,dataset,entries,unfold = False,smear = False):
+    def __init__(self,pmap,workspace,file,dataset,entries):
         self.map=pmap
         self.w=workspace
         f = ROOT.TFile(file)
         datas=f.Get(dataset)
         self.cache = ROOT.TFile('__cacheE__'+str(datetime.datetime.now().time())+'.root','RECREATE')
-
-        if smear:
-            datas=pmap.smearEbE2D(datas,self.w)
-#            datas=pmap.smear2D(datas,self.w)
-
-
 
         limits = self.map.limits()
         cut1="curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=limits['curv'][0],curvUp=limits['curv'][1],etaDown=limits['eta'][0],etaUp=limits['eta'][1],phiDown=limits['phi'][0],phiUp=limits['phi'][1])
@@ -55,21 +49,8 @@ class DataSetBuilder (object):
         self.tree.get().find('phiRaw2').setMin(limits['phi'][0])
         self.tree.get().find('phiRaw2').setMax(limits['phi'][1])
 
-#            self.unsmearedTree = self.tree
-#            self.tree=pmap.smear2D(self.tree,self.w,0.01)
 
-        if unfold:
-            self.foldedTree =self.tree
-#            self.tree = self.unfoldDataSet2D(self.tree)
-#            print 'before UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
-
-            self.tree = self.unfoldDataSetSlice(self.tree,'pos')
-#            print 'first UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
-
-            self.tree = self.unfoldDataSetSlice(self.tree,'neg')
-#            print 'second UNFOLDING',self.tree.mean(self.tree.get().find('curvRaw1')),self.tree.mean(self.tree.get().find('curvRaw2'))
-
-
+        
     def save(self,filename):
         f = ROOT.TFile(filename,"RECREATE")
         f.cd()
@@ -168,96 +149,6 @@ class DataSetBuilder (object):
         else:
             return 0.0
 
-    def unfoldDataSet(self,data):
-        spectrum = self.convertToBinned(data,'massRaw',100).createHistogram('massRaw',100)
-        newData = ROOT.RooDataSet(data.GetName(),data.GetTitle(),data.get())
-        for i in range(0,data.numEntries()):
-            line = data.get(i)
-            x = line.find('massRaw').getVal()
-            resolution = line.find('massErrRaw').getVal()
-            deriv = self.getDerivativeOverContent(spectrum,x)
-            line.find('massRaw').setVal(x+resolution*resolution*deriv)
-            newData.add(line)
-        return newData
-
-    def unfoldDataSet2D(self,data):
-        spectrum = self.convertToBinned2D(data,['curvRaw1','curvRaw2'],30,30).createHistogram('curvRaw1,curvRaw2',30,30)
-        newData = ROOT.RooDataSet(data.GetName(),data.GetTitle(),data.get())
-        for i in range(0,data.numEntries()):
-            line = data.get(i)
-            x = line.find('curvRaw1').getVal()
-            y = line.find('curvRaw2').getVal()
-            resolutionx = 2*line.find('massErrRaw1').getVal()*line.find('curvRaw1').getVal()/line.find('massRaw').getVal()
-            resolutiony = 2*line.find('massErrRaw2').getVal()*line.find('curvRaw2').getVal()/line.find('massRaw').getVal()
-            derivx = self.getDerivative2D(spectrum,x,y,'X')
-            derivy = self.getDerivative2D(spectrum,x,y,'Y')
-
-#            print 'before',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
-
-            
-            line.find('curvRaw1').setVal(x+resolutionx*resolutionx*derivx)
-            line.find('curvRaw2').setVal(y+resolutiony*resolutiony*derivy)
-
-            v1=ROOT.TLorentzVector()
-            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
-                                   line.find('etaRaw1').getVal(),
-                                   line.find('phiRaw1').getVal(),
-                                   self.w.var('muMass').getVal())
-            
-            v2=ROOT.TLorentzVector()
-            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
-                                   line.find('etaRaw2').getVal(),
-                                   line.find('phiRaw2').getVal(),
-                                   self.w.var('muMass').getVal())
-
-            line.find('massRaw').setVal((v1+v2).M())
-#            print 'after',line.find('curvRaw1').getVal(),line.find('curvRaw2').getVal(),line.find('massRaw').getVal()
-
-            newData.add(line)
-        return newData
-
-    def unfoldDataSetSlice(self,data,sign):
-        if sign=='pos':
-            curv='curvRaw1'
-            othercurv='curvRaw2'
-            massErr='massErrRaw1'
-        else:
-            curv='curvRaw2'
-            othercurv='curvRaw1'
-            massErr='massErrRaw2'
-            
-        spectrum = self.convertToBinned(data,curv,100).createHistogram(curv,100)
-        newData = ROOT.RooDataSet(data.GetName(),data.GetTitle(),data.get())
-        for i in range(0,data.numEntries()):
-            line = data.get(i)
-            x = line.find(curv).getVal()
-            resolution = 2*line.find(massErr).getVal()*line.find(curv).getVal()/line.find('massRaw').getVal()
-#            resolution = 0.00022
-#            resolution = 0.01*line.find(curv).getVal()
-            derivx = self.getDerivativeOverContent(spectrum,x)
-            
-            line.find(curv).setVal(x+resolution*resolution*derivx)
-
-            v1=ROOT.TLorentzVector()
-            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
-                                   line.find('etaRaw1').getVal(),
-                                   line.find('phiRaw1').getVal(),
-                                   self.w.var('muMass').getVal())
-            
-            v2=ROOT.TLorentzVector()
-            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
-                                   line.find('etaRaw2').getVal(),
-                                   line.find('phiRaw2').getVal(),
-                                   self.w.var('muMass').getVal())
-
-            line.find('massRaw').setVal((v1+v2).M())
-
-
-            newData.add(line)
-        return newData
-     
-
-            
 
         
     def build(self,max=-1,exclusive=0):
@@ -298,11 +189,11 @@ class DataSetBuilder (object):
         self.statistics()
 
 
+    def buildPStar(self,mass=90.86):
+        pstar = ROOT.RooFormulaVar("pStar","{M}*sqrt(1.0/(exp(etaRaw1-etaRaw2)+exp(etaRaw2-etaRaw1) -2*cos(phiRaw1-phiRaw2)))".format(M=mass),ROOT.RooArgList(self.w.var("phiRaw1"),self.w.var("phiRaw2"),self.w.var("etaRaw1"),self.w.var("etaRaw2")))
+        
+        self.tree.addColumn(pstar)
 
-
-
-
-    def buildAveragePt(self,max=-1,exclusive=0):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
@@ -310,31 +201,70 @@ class DataSetBuilder (object):
                     curvDown,curvUp = self.map.boundaries_curv(bin)
                     etaDown,etaUp = self.map.boundaries_eta(bin)
                     phiDown,phiUp = self.map.boundaries_phi(bin)
-                    if exclusive==0:
-                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                    elif exclusive==1:
-                        setPos = self.tree.reduce("curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&(!(curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                    else:
-                        setPos = self.tree.reduce("((curvRaw1+curvRaw2)/2.>{curvDown}&&(curvRaw1+curvRaw2)/2.<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}&&(etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                        
+                    setPos = self.tree.reduce("pStar>1./{curvUp}&&pStar<1./{curvDown}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    setPos.SetName("pos_"+str(bin))
+                    self.positiveSamples[bin]=setPos
+
+                    setNeg = self.tree.reduce("pStar>1./{curvUp}&&pStar<1.0/{curvDown}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    setNeg.SetName("neg_"+str(bin))
+
+                    self.negativeSamples[bin]=setNeg
+        self.cache.Close()
+        self.statistics()
+
+
+
+    def buildHighPt(self,max=-1):
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    curvDown,curvUp = self.map.boundaries_curv(bin)
+                    etaDown,etaUp = self.map.boundaries_eta(bin)
+                    phiDown,phiUp = self.map.boundaries_phi(bin)
+                    setPos = self.tree.reduce("(curvRaw1<curvRaw2&&curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp})||(curvRaw2<curvRaw1&&curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp})".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                     setPos.SetName("pos_"+str(bin))
 
                     if max>-1:
                         setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
                     self.positiveSamples[bin]=setPos
-                    if  exclusive==0:    
-                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                    elif exclusive ==1:
-                        setNeg = self.tree.reduce("curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&(!(curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                    else:
-                        setNeg = self.tree.reduce("(curvRaw1+curvRaw2)/2.>{curvDown}&&(curvRaw1+curvRaw2)/2.<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp}&&((etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}))".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
-                        
+
+                    setNeg = self.tree.reduce("(curvRaw1<curvRaw2&&curvRaw1>{curvDown}&&curvRaw1<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp})||(curvRaw2<curvRaw1&&curvRaw2>{curvDown}&&curvRaw2<{curvUp}&&etaRaw2>{etaDown}&&etaRaw2<{etaUp}&&phiRaw2>{phiDown}&&phiRaw2<{phiUp})".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
                     setNeg.SetName("neg_"+str(bin))
 
 
                     if max>-1:
                         setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
 
+                    self.negativeSamples[bin]=setNeg
+        self.cache.Close()
+        self.statistics()
+
+
+
+
+
+
+    def buildAveragePt(self,max=-1):
+        for i in range(1,self.map.bins_curv()+1):
+            for j in range(1,self.map.bins_eta()+1):
+                for k in range(1,self.map.bins_phi()+1):
+                    bin = self.map.bin(i,j,k)
+                    curvDown,curvUp = self.map.boundaries_curv(bin)
+                    etaDown,etaUp = self.map.boundaries_eta(bin)
+                    phiDown,phiUp = self.map.boundaries_phi(bin)
+
+                    setPos = self.tree.reduce("(curvRaw1+curvRaw2)/2.0>{curvDown}&&(curvRaw1+curvRaw2)/2.0<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+                    setPos.SetName("pos_"+str(bin))
+                    if max>-1:
+                        setPos=setPos.reduce(ROOT.RooFit.EventRange(0,max))
+                    self.positiveSamples[bin]=setPos
+
+                    setNeg = self.tree.reduce("(curvRaw1+curvRaw2)/2.0>{curvDown}&&(curvRaw1+curvRaw2)/2.0<{curvUp}&&etaRaw1>{etaDown}&&etaRaw1<{etaUp}&&phiRaw1>{phiDown}&&phiRaw1<{phiUp}".format(curvDown=curvDown,curvUp=curvUp,etaDown=etaDown,etaUp=etaUp,phiDown=phiDown,phiUp=phiUp))
+
+                    setNeg.SetName("neg_"+str(bin))
+                    if max>-1:
+                        setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
                     self.negativeSamples[bin]=setNeg
         self.cache.Close()
         self.statistics()        
@@ -366,41 +296,25 @@ class DataSetBuilder (object):
         self.statistics()
 
 
-    def buildVsDiLepton(self,maxx=-1):
+    def buildRapidity(self,max=-1):
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
                     bin = self.map.bin(i,j,k)
-                    self.positiveSamples[bin] = ROOT.RooDataSet("pos_"+str(bin),"",self.tree.get())
-                    self.negativeSamples[bin] = ROOT.RooDataSet("neg_"+str(bin),"",self.tree.get())
-
-                    
-        for event in range(0,self.tree.numEntries()):
-            line = self.tree.get(event)
-            v1=ROOT.TLorentzVector()
-            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
-                            line.find('etaRaw1').getVal(),
-                            line.find('phiRaw1').getVal(),
-                            0.1056583715)
-            
-            v2=ROOT.TLorentzVector()
-            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
-                            line.find('etaRaw2').getVal(),
-                            line.find('phiRaw2').getVal(),
-                            0.1056583715)
-            
-            v = v1+v2
-
-            bin = self.map.binFromVals(1/v.Pt(),v.Eta(),v.Phi())
-
-            if not (bin in self.positiveSamples.keys()):
-                print 'WILL REMOVE EVENT',1/v.Pt(),v.Eta(),v.Phi()
-                continue
-            if self.positiveSamples[bin].numEntries()<maxx or maxx<0:
-                self.positiveSamples[bin].add(line)
-                self.negativeSamples[bin].add(line)
+                    etaDown,etaUp = self.map.boundaries_eta(bin)
+                    setPos = self.tree.reduce("rapidity>{etaDown}&&rapidity<{etaUp}".format(etaDown=etaDown,etaUp=etaUp))
+                    setPos.SetName("pos_"+str(bin))
+                    setNeg = copy.deepcopy(setPos)
+                    setNeg.SetName("neg_"+str(bin))
+                    if max>-1:
+                        setNeg=setNeg.reduce(ROOT.RooFit.EventRange(0,max))
+                    self.negativeSamples[bin]=setNeg
+                    self.positiveSamples[bin]=setPos
         self.cache.Close()
         self.statistics()
+
+
+
 
 
     def buildPairs(self):
@@ -485,7 +399,9 @@ class DataSetBuilder (object):
 
     def convertToBinned(self,data,variable,bins=100):
         self.w.var(variable).setBins(bins)
-        return ROOT.RooDataHist(data.GetName(),'',ROOT.RooArgSet(self.w.var(variable)),data)
+        data.get().find(variable).setBins(bins)
+
+        return ROOT.RooDataHist(data.GetName(),'',ROOT.RooArgSet(data.get().find(variable)),data)
 
     def convertToBinned2D(self,data,variables,binsx,binsy):
         self.w.var(variables[0]).setBins(binsx);

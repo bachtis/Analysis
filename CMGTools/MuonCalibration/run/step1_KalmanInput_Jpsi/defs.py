@@ -27,8 +27,7 @@ phiArr=[-math.pi,math.pi]
 
 etaArr=[]
 for i in range(0,26):
-    etaArr.append(-1.3+2.6*i/25.0)
-
+    etaArr.append(-0.9+1.8*i/25)
 
 
 pmap = PartitionMap(curvArr,etaArr,phiArr,"")

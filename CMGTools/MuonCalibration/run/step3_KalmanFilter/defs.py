@@ -11,6 +11,7 @@ from CMGTools.MuonCalibration.tools.workspaceTools import prepareWorkspace
 from CMGTools.MuonCalibration.tools.PartitionMap import PartitionMap
 from CMGTools.MuonCalibration.tools.DataSetBuilder import DataSetBuilder
 from CMGTools.MuonCalibration.tools.Unfolding import AnalyticalUnfolding,Unfolding
+from CMGTools.MuonCalibration.tools.Smearing import smearAbsolute,smearEbE2D,smearFlat
 
 
 #create a MC dataset for the lineshape
@@ -26,6 +27,7 @@ for i in range(0,11):
 etaArr=[]
 for i in range(0,11):
     etaArr.append(-0.9+1.8*i/10.)
+
 
 
 

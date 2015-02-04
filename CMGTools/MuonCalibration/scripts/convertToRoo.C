@@ -1,6 +1,5 @@
 using namespace RooFit;
 
-
 void  convertToRoo(const char* muon1,const char* muon2,const char* file,const char *newfile,const char* tree,const char* preselection,bool isGEN = false,bool isDATA=false,int min=0, int max=-1) {
 
   TFile * f = new TFile(file);
@@ -19,7 +18,9 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   w->factory("massErrRaw2[1.0,0,30.]");
   w->factory("muMass[0.1056583715]");
   w->factory("massRaw[0,1000]");
+  w->factory("rapidity[-6,6]");
   w->factory("eta[-6,6]");
+  w->factory("pt[0.0,200.0]");
 
 
   TFile * cache = new TFile("__cacheR__.root","RECREATE");
@@ -37,7 +38,9 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
   set.add(*w->var("massErrRaw"));
   set.add(*w->var("curvGenRaw1"));
   set.add(*w->var("curvGenRaw2"));
+  set.add(*w->var("rapidity"));
   set.add(*w->var("eta"));
+  set.add(*w->var("pt"));
 
 
 
@@ -84,6 +87,8 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
       w->var("curvGenRaw1")->setVal(1./ptgen1);
       w->var("curvGenRaw2")->setVal(1./ptgen2);
     }
+
+
     w->var("etaRaw1")->setVal(eta1);
     w->var("phiRaw1")->setVal(phi1);
     w->var("curvRaw2")->setVal(1./pt2);
@@ -97,7 +102,9 @@ void  convertToRoo(const char* muon1,const char* muon2,const char* file,const ch
  
 
     w->var("massRaw")->setVal(((*v1)+(*v2)).M());
+    w->var("rapidity")->setVal(((*v1)+(*v2)).Rapidity());
     w->var("eta")->setVal(((*v1)+(*v2)).Eta());
+    w->var("pt")->setVal(((*v1)+(*v2)).Pt());
 
 
     //Event by event error

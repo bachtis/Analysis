@@ -87,10 +87,8 @@ class KalmanCalibrator(SimpleKalmanFilter):
 
     def loadZMatrix(self,filename):
         self.f2=ROOT.TFile(filename)
-        self.ZMATRIX=self.f2.Get('mass_fit')
-        self.zMatrix = self.ZMATRIX.ProjectionY("zmatrix",1,1,1,1)
-        self.ZMATRIXRMS=self.f2.Get('width_fit')
-        self.zMatrixRMS = self.ZMATRIXRMS.ProjectionY("zmatrixRMS",1,1,1,1)
+        self.zMatrix=self.f2.Get('mass_fit')
+
 
     def save(self,tag):
         self.fileout.cd()
@@ -128,7 +126,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
             
             v = v1+v2
 
-            matrix_bin = self.jpsiMatrix.GetXaxis().FindBin(v.Eta())
+            matrix_bin = self.jpsiMatrix.GetXaxis().FindBin(v.Rapidity())
             mean = self.jpsiMatrix.GetBinContent(matrix_bin)
 
 
@@ -160,10 +158,6 @@ class KalmanCalibrator(SimpleKalmanFilter):
         if self.zMatrix is None:
             print 'MATRIX FOR Z not found'
             return
-        if self.zMatrixRMS is None:
-            print 'RMS MATRIX FOR Z not found'
-            return
-
             
         #loop in all events
         for i in range(0,data.numEntries()):
@@ -184,10 +178,9 @@ class KalmanCalibrator(SimpleKalmanFilter):
             
             v = v1+v2
 
-            matrix_bin = self.zMatrix.GetXaxis().FindBin(v.Eta())
+            matrix_bin = self.zMatrix.GetXaxis().FindBin(v.Rapidity())
             mean = self.zMatrix.GetBinContent(matrix_bin)
-            width = self.zMatrixRMS.GetBinContent(matrix_bin)
-
+            width = self.zMatrix.GetBinError(matrix_bin)
 
             z=ROOT.TVectorD(1)
             z[0] = line.find('massRaw').getVal()/mean

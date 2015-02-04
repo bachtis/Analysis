@@ -8,6 +8,8 @@
 #include "../interface/RooPosNegBiasEstimator.h"
 #include "../interface/RooSplineND.h"
 #include "../interface/SampleSmearing.h"
+#include "../interface/UnfoldingMap.h"
+#include "../interface/UnfoldingMapDeriv.h"
 
 #ifdef __CINT__
 #pragma link off all globals;
@@ -23,5 +25,7 @@
 #pragma link C++ class RooPosNegBiasEstimator+;
 #pragma link C++ class RooSplineND+;
 #pragma link C++ class SampleSmearing+;
+#pragma link C++ class UnfoldingMap+;
+#pragma link C++ class UnfoldingMapDeriv+;
 #endif
 
