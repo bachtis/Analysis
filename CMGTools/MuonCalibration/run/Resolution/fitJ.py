@@ -1,6 +1,6 @@
 from defs import *
 
-pmapJ = PartitionMap(curvArr,etaArr,phiArr,"JpsiResolution2D.root")
+pmapJ = PartitionMap(curvArr,etaArr,phiArr,"JpsiResolutionMC2D.root")
 
 
 
@@ -9,26 +9,30 @@ pmapJ.declareData('sigmaAbs',0.00)
 pmapJ.declareData('ebeAbs',0.00)
 
 builder = DataSetBuilder(pmapJ,w,'../../data/JDATA.root','data',1000000000)
-builder.load("JData_Input.root")
+builder.load("JMC_Input.root")
 
 builderG = DataSetBuilder(pmapJ,w,'../../data/JGEN.root','data',1000000000)
 builderG.load("JGEN_Input.root")
 
 
-sched = Scheduler(['JPSI'],1)
+sched = Scheduler(['JPSIMC'],1)
 for bin,data in builder.data('pos').iteritems():
     w=ROOT.RooWorkspace('w','w')
     prepareWorkspace(w)
     w.var('massRaw').setMin(2.9)
     w.var('massRaw').setMax(3.2)
-    w.var('massRaw').setBins(100)
+    w.var('massRaw').setBins(50)
     fitter = LineshapeFitter(w)
     fitter.addObservable('massRaw')
-    dataU = data.reduce('massRaw>2.9&&massRaw<3.2&&massErrRaw1<0.03&&massErrRaw2<0.03')
+
+    dataU = data.reduce('massRaw>2.9&&massRaw<3.2')
+    data2 = builder.data('neg')[bin].reduce("massRaw>2.9&&massRaw<3.2")
+    dataU.append(data2)
+
     dataU.get().find("massRaw").setMin(2.9)
-    dataU.get().find("massRaw").setMax(3.3)
-    dataU.get().find("massRaw").setBins(100)
-    dataBinned=builder.convertToBinned(dataU,'massRaw',100)
+    dataU.get().find("massRaw").setMax(3.2)
+    dataU.get().find("massRaw").setBins(50)
+    dataBinned=builder.convertToBinned(dataU,'massRaw',50)
 #    lineshape=builderG.data('pos')[bin].reduce('massRaw>2.8&&massRaw<3.3').reduce(ROOT.RooFit.EventRange(0,1000))
 #    fitter.buildJModelSimple('model',w.var('massRaw'),lineshape)
     fitter.buildJModelCBSimple('model',False)

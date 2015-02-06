@@ -1,6 +1,6 @@
 import ROOT
 import math
-def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=False,siliconOnlyErrCalib=False):
+def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=False):
     calibrator = ROOT.KalmanCalibrator(isData)
     newData = ROOT.RooDataSet("data","data",data.get())
     for i in range(0,data.numEntries()):
@@ -15,9 +15,9 @@ def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=Fals
         err2=line.find('massErrRaw2').getVal()
         m=line.find('massRaw').getVal()
         if errCalib:    
-            err1 = calibrator.getCorrectedError(pt1,eta1,err1/m,siliconOnlyErrCalib)*m
-            err2 = calibrator.getCorrectedError(pt2,eta2,err2/m,siliconOnlyErrCalib)*m
-        
+            err1 = calibrator.getCorrectedError(pt1,eta1,err1/m)*m
+            err2 = calibrator.getCorrectedError(pt2,eta2,err2/m)*m
+       
 
         if bOnlyCalib:
             pt1 = calibrator.getCorrectedPtMag(pt1,eta1,phi1)

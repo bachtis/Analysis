@@ -6,8 +6,8 @@ print 'This step is needed only for data to apply the bfield map corrections'
 print 'J /psi data'
 builder = DataSetBuilder(pmap,w,'../../data/JDATA.root','data',10000000)
 builder.tree = builder.tree.reduce('massRaw>3.0&&massRaw<3.2') 
-#builder.tree = correctDataSet(builder.tree,True,False,True,True)
-#unfolding=AnalyticalUnfolding(builder.tree,25,0.04,1./5.5)
+builder.tree = correctDataSet(builder.tree,True,False,True,True)
+#unfolding=AnalyticalUnfolding(builder.tree,50,1./50,1./5.5)
 #builder.tree = unfolding.unfoldDataSet(builder.tree)
 f2=ROOT.TFile('JData_Input.root','RECREATE')
 f2.cd()
@@ -15,24 +15,24 @@ builder.tree.Write('data')
 f2.Close()
 
 
-print 'J /psi MC'
+#print 'J /psi MC'
 
-builder = DataSetBuilder(pmap,w,'../../data/JMC.root','data',10000000)
-builder.tree = builder.tree.reduce('massRaw>3&&massRaw<3.2') 
+#builder = DataSetBuilder(pmap,w,'../../data/JMC.root','data',10000000)
+#builder.tree = builder.tree.reduce('massRaw>3&&massRaw<3.2') 
 #builder.tree = correctDataSet(builder.tree,False,False,True,False)
 #unfolding=AnalyticalUnfolding(builder.tree,25,0.04,1./5.5)
 #builder.tree = unfolding.unfoldDataSet(builder.tree)
-f2=ROOT.TFile('JMC_Input.root','RECREATE')
-f2.cd()
-builder.tree.Write('data')
-f2.Close()
+#f2=ROOT.TFile('JMC_Input.root','RECREATE')
+#f2.cd()
+#builder.tree.Write('data')
+#f2.Close()
 
 
 
 print 'Z data'
 
 builder = DataSetBuilder(pmap,w,'../../data/ZDATA.root','data',10000000)
-#builder.tree = correctDataSet(builder.tree,True,False,False,True)
+builder.tree = correctDataSet(builder.tree,True,False,True,True)
 #unfolding=AnalyticalUnfolding(builder.tree,50,1./80.,1./25)
 #builder.tree = unfolding.unfoldDataSet(builder.tree)
 builder.tree = builder.tree.reduce('massRaw>85.0&&massRaw<95.') 
@@ -46,7 +46,7 @@ print 'Z MC1'
 
 builder = DataSetBuilder(pmap,w,'../../data/ZMC1.root','data',10000000)
 builder.tree = builder.tree.reduce('massRaw>85.&&massRaw<95.') 
-#builder.tree = correctDataSet(builder.tree,False,False,True,False)
+builder.tree = correctDataSet(builder.tree,False,False,True,False)
 #unfolding=AnalyticalUnfolding(builder.tree,50,1./100.,0.033)
 #builder.tree = unfolding.unfoldDataSet(builder.tree)
 f2=ROOT.TFile('ZMC_Input.root','RECREATE')

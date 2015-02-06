@@ -4,11 +4,11 @@ import math
 #load the ratio of signal and background and the slopes
 
 
-def estimate(minMass,maxMass,bkg=True):
+def estimate(minMass,maxMass,bkg=False):
 
-    filename="kalmanTargetJpsi_nobkg.root"
+    filename="kalmanTargetJpsi_Data.root"
     if  bkg:
-        filename="kalmanTargetJpsi_bkg.root"
+        filename="kalmanTargetJpsi_Data_Bkg.root"
         
     pmap = PartitionMap(curvArr,etaArr,phiArr,filename)
 
@@ -16,8 +16,9 @@ def estimate(minMass,maxMass,bkg=True):
     pmap.load('JDataFits.root','BKGoverSIGNAL_fit','ratio')
     pmap.declareData('mass',0.0)
 
+
     builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',50000000)
-    builder.load("JGEN.root")
+    builder.load("JGENDataSmear.root")
 
     w.var('massRaw').setBins(50)
     w.var('massRaw').setMin(2.9)
@@ -42,7 +43,6 @@ def estimate(minMass,maxMass,bkg=True):
     pmap.save('fit')      
 
 
-estimate(3.0,3.2,True)          
 estimate(3.0,3.2,False)          
 
 

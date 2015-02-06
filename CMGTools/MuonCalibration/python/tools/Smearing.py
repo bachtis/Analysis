@@ -1,8 +1,8 @@
 import ROOT
 import math
 
-def smearAbsolute(data):
-    calibrator = ROOT.KalmanCalibrator(True)
+def smearAbsolute(data,isData = True):
+    calibrator = ROOT.KalmanCalibrator(isData)
     newData = ROOT.RooDataSet("data","data",data.get())
     for i in range(0,data.numEntries()):
         line =data.get(i)
@@ -39,6 +39,47 @@ def smearAbsolute(data):
         newData.add(line)
             
     return newData
+
+
+def smearRelative(data,isData):
+    calibrator = ROOT.KalmanCalibrator(isData)
+    newData = ROOT.RooDataSet("data","data",data.get())
+    for i in range(0,data.numEntries()):
+        line =data.get(i)
+        pt1 = 1./line.find('curvRaw1').getVal()
+        eta1 = line.find('etaRaw1').getVal()
+        phi1 = line.find('phiRaw1').getVal()
+        err1=line.find('massErrRaw1').getVal()
+        pt2 = 1./line.find('curvRaw2').getVal()
+        eta2 = line.find('etaRaw2').getVal()
+        phi2 = line.find('phiRaw2').getVal()
+        err2=line.find('massErrRaw2').getVal()
+        m=line.find('massRaw').getVal()
+
+        pt1 = calibrator.smear(pt1,eta1)
+        pt2 = calibrator.smear(pt2,eta2)
+
+            
+        line.find('curvRaw1').setVal(1.0/pt1)
+        line.find('curvRaw2').setVal(1.0/pt2)
+
+        #recalculate the mass
+        v1=ROOT.TLorentzVector()
+        v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                        line.find('etaRaw1').getVal(),
+                        line.find('phiRaw1').getVal(),
+                        0.1056583715)
+        
+        v2=ROOT.TLorentzVector()
+        v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                        line.find('etaRaw2').getVal(),
+                        line.find('phiRaw2').getVal(),
+                        0.1056583715)
+        line.find('massRaw').setVal((v1+v2).M())
+        newData.add(line)
+            
+    return newData
+
 
 
 def smearEbE2D(data,shift = 1.0,errorScale=1.0,updateMass = True):

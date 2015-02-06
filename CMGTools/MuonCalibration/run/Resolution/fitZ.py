@@ -1,6 +1,6 @@
 from defs import *
 
-pmapZ = PartitionMap(curvArr,etaArr,phiArr,"zResolution2D.root")
+pmapZ = PartitionMap(curvArr,etaArr,phiArr,"zResolutionMC2D.root")
 
 
 pmapZ.declareData('scale',0.00)
@@ -10,13 +10,13 @@ pmapZ.declareData('ebeAbs',0.00)
 
 
 builder = DataSetBuilder(pmapZ,w,'../../data/JMC.root','data',1000000000)
-builder.load("ZData_Input.root")
+builder.load("ZMC_Input.root")
 
 builderG = DataSetBuilder(pmapZ,w,'../../data/JGEN.root','data',1000000000)
 builderG.load("ZGEN_Input.root")
 
 
-sched = Scheduler(['Z'],1)
+sched = Scheduler(['ZMC'],1)
 for bin,data in builder.data('pos').iteritems():
     w=ROOT.RooWorkspace('w','w')
     prepareWorkspace(w)
@@ -25,8 +25,9 @@ for bin,data in builder.data('pos').iteritems():
     w.var('massRaw').setBins(100)
     fitter = LineshapeFitter(w)
     fitter.addObservable('massRaw')
-    dataU.append(builder.data('neg')[bin] 
     dataU = data.reduce('massRaw>80&&massRaw<110')
+    data2 = builder.data('neg')[bin].reduce('massRaw>80&&massRaw<110')
+    dataU.append(data2)
     dataU.get().find("massRaw").setMin(80)
     dataU.get().find("massRaw").setMax(120)
     dataU.get().find("massRaw").setBins(100)
@@ -43,6 +44,9 @@ for bin,data in builder.data('pos').iteritems():
 sched.submitLOCAL()
 
 for bin,data in builder.data('pos').iteritems():
+    if (data.numEntries())<=0:
+        continue
+
     value,error = sched.harvest(bin,'scale')
     pmapZ.setData('scale',bin,value,error)
     value,error = sched.harvest(bin,'error1')
@@ -52,8 +56,6 @@ for bin,data in builder.data('pos').iteritems():
 
     ratio =errAvgPos/errAvg 
 
-    if (data.numEntries())<=0:
-        continue
     pmapZ.setData('sigmaAbs',bin,(value*value*ratio*ratio)/(massAvg*massAvg) ,2*value*ratio*ratio*error/(massAvg*massAvg))
     pmapZ.setData('ebeAbs',bin,(errAvgPos*errAvgPos)/(massAvg*massAvg) ,0.0)
     pmapZ.setData('sigmaCorr',bin,(value*value*ratio*ratio -errAvgPos*errAvgPos)/(massAvg*massAvg) ,2*value*ratio*ratio*error/(massAvg*massAvg))
