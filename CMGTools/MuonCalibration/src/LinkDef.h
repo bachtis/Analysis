@@ -10,6 +10,7 @@
 #include "../interface/SampleSmearing.h"
 #include "../interface/UnfoldingMap.h"
 #include "../interface/UnfoldingMapDeriv.h"
+#include "../interface/DynamicBinnedSmearingPdf.h"
 
 #ifdef __CINT__
 #pragma link off all globals;
@@ -27,5 +28,6 @@
 #pragma link C++ class SampleSmearing+;
 #pragma link C++ class UnfoldingMap+;
 #pragma link C++ class UnfoldingMapDeriv+;
+#pragma link C++ class DynamicBinnedSmearingPdf+;
 #endif
 

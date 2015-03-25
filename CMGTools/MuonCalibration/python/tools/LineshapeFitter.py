@@ -1,3 +1,4 @@
+
 import ROOT
 import os
 import math
@@ -94,6 +95,53 @@ class LineshapeFitter(object):
 
 
 
+    def buildJModelResolution(self,name, var,dataset):
+
+        #create lineshape histogram"
+        #--------------------------
+        
+        lineHisto=ROOT.TH1F("lineshape","lineshape",var.getBinning().numBins(),var.getMin(),var.getMax())
+        for i in range(0,dataset.numEntries()):
+            line=dataset.get(i)
+            lineHisto.Fill(line.find("massRaw").getVal())
+
+
+        self.w.factory('scale[0,-0.1,0.1]')
+        self.w.factory('error1[0.02,0.001,0.1]')
+
+        lineHisto.Scale(1./lineHisto.Integral())
+        getattr(self.w,'importClassCode')(ROOT.DynamicBinnedSmearingPdf.Class(),1)
+        pdf = ROOT.DynamicBinnedSmearingPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),lineHisto)
+        getattr(self.w,'import')(pdf)
+        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,5])')
+        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
+        self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
+
+    def buildJModelResolutionUnbinned(self,name, var,dataset):
+
+        #create lineshape histogram"
+        #--------------------------
+        
+        lineHisto=ROOT.TH1F("lineshape","lineshape",var.getBinning().numBins(),var.getMin(),var.getMax())
+        for i in range(0,dataset.numEntries()):
+            line=dataset.get(i)
+            lineHisto.Fill(line.find("massRaw").getVal())
+
+
+        self.w.factory('scale[0,-0.01,0.01]')
+        self.w.factory('b[0,-0.001,0.008]')
+        self.w.factory("expr::sigma('sqrt(massErrRaw*massErrRaw/(massRaw*massRaw)+b*b)*massRaw',massErrRaw,massRaw,b)")
+
+        getattr(self.w,'importClassCode')(ROOT.DynamicBinnedSmearingPdf.Class(),1)
+        pdf = ROOT.DynamicBinnedSmearingPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.function('sigma'),lineHisto)
+        getattr(self.w,'import')(pdf)
+        self.w.factory('RooExponential::'+name+'Bkg('+var.GetName()+',bkgSlope[-1,-8.,5])')
+        self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,100000]*'+name+'Bkg)')
+        self.nuisances.extend(['bkgSlope','NSIG','NBKG'])
+        self.conditionals.extend(['massErrRaw'])     
+
+
+
     def buildZModel(self,name, var,dataset):
         self.w.factory('scale[1.0,0.995,1.005]')
 
@@ -114,7 +162,6 @@ class LineshapeFitter(object):
         self.w.factory('error1[1,0.01,10.]')
         self.w.factory('error2[0.0]')
         self.poi.append('scale')
-        self.w.factory("expr::relativeError('error1*massErrRaw',error1,massErrRaw")
         getattr(self.w,'importClassCode')(ROOT.RooGaussianSumPdfWithSigma.Class(),1)
         
         pdf = ROOT.RooGaussianSumPdf(name+'Sig',name+'Sig',var,self.w.var('scale'),self.w.var('error1'),self.w.var('error2'),dataset,'massRaw')
@@ -146,20 +193,25 @@ class LineshapeFitter(object):
 
 
     def buildJModelCBSimple(self,name,isMC = False):
-        self.w.factory("error1[0.01,0.0001,0.1]")
-        self.poi.append('error1')
+        self.w.factory("error1[0.01,0.005,0.1]")
         if isMC:
             postfix=''
         else:    
             postfix='Sig'
 
-        self.w.factory('RooCBShape::'+name+postfix+'(massRaw,mass[3.091,3.08,3.12],error1,alpha[3,0.5,20],n[4.77,0.1,100])')
+        self.w.factory("scale[0.995,1.005]")
+        self.w.factory("expr::mass('3.097*scale',scale)")
+        self.poi.append('scale')
+
+                    
+        self.w.factory('RooCBShape::'+name+postfix+'(massRaw,mass,error1,alpha[3,0.5,20],n[4.77,0,20])')
         if not isMC:
             self.w.factory('RooExponential::'+name+'Bkg(massRaw,bkgSlope[-1,-8.,5])')
             self.w.factory('SUM::'+name+'(NSIG[0,100000000]*'+name+'Sig,NBKG[1,0,1000000]*'+name+'Bkg)')
-            self.nuisances.extend(['bkgSlope','NSIG','NBKG','mass'])
+            self.nuisances.extend(['bkgSlope','NBKG','error1','alpha','n'])
         else:    
-            self.nuisances.extend(['mass'])
+            self.nuisances.extend(['error1','alpha','n'])
+
 
 
 
@@ -167,7 +219,6 @@ class LineshapeFitter(object):
     def buildZModelCBParam(self,name):
         self.w.factory("a[1e-6,1e-12,1e-4]")
         self.poi.append('a')
-#        self.w.factory("expr::sigma('1e-12+sqrt(massErrRaw1*massErrRaw1/(massRaw2*massRaw2)+massErrRaw2*massErrRaw2/(massRaw2*massRaw2)+a/(curvRaw1*curvRaw1)+a/(curvRaw2*curvRaw2))*massRaw2',massErrRaw1,massErrRaw2,a,curvRaw1,curvRaw2,massRaw2)")
         self.w.factory("expr::sigma('1e-12+sqrt(massErrRaw1*massErrRaw1/(massRaw2*massRaw2)+massErrRaw2*massErrRaw2/(massRaw2*massRaw2)+2*a)*massRaw2',massErrRaw1,massErrRaw2,a,curvRaw1,curvRaw2,massRaw2)")
         self.w.factory('RooBreitWigner::lineshape(massRaw,90.86,2.4952)')
         self.w.factory('RooCBShape::resolution(massRaw,shift[0.0,-5.,5.],sigma,alpha[3],n[4.77,0.1,100])')
@@ -214,7 +265,9 @@ class LineshapeFitter(object):
                 fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Save(1),ROOT.RooFit.Minos(0),ROOT.RooFit.Strategy(2),ROOT.RooFit.ConditionalObservables(self.w.set('conditionals')))
             else:
                 fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Save(1),ROOT.RooFit.Minos(1),ROOT.RooFit.Strategy(2))
-
+#                for n in self.nuisances:
+#                    self.w.var(n).setConstant(1)
+#                fitResult=self.w.pdf(model).fitTo(data,ROOT.RooFit.Verbose(verbose),ROOT.RooFit.PrintLevel(verbose),ROOT.RooFit.NumCPU(4,0),ROOT.RooFit.Save(1),ROOT.RooFit.Minos(1),ROOT.RooFit.Strategy(2))
 
 
 

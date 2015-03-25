@@ -16,12 +16,12 @@ builder.save("JMC_Input.root")
 
 
 
-#builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',10000000)
-#builder.tree = builder.tree.reduce("massErrRaw1>0&&massErrRaw2>0")
+builder = DataSetBuilder(pmap,w,'../../data/JGEN.root','data',10000000)
+builder.tree = builder.tree.reduce("massErrRaw1>0&&massErrRaw2>0")
 #builder.tree = correctDataSet(builder.tree,False,False,True,False,True)
 #builder.tree = correctDataSet(builder.tree,False,False,True,False,True)
-#builder.build()
-#builder.save("JGEN_Input.root")
+builder.build()
+builder.save("JGEN_Input.root")
 
 
 

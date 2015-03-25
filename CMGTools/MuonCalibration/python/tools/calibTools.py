@@ -14,11 +14,14 @@ def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=Fals
         phi2 = line.find('phiRaw2').getVal()
         err2=line.find('massErrRaw2').getVal()
         m=line.find('massRaw').getVal()
+
+
         if errCalib:    
             err1 = calibrator.getCorrectedError(pt1,eta1,err1/m)*m
             err2 = calibrator.getCorrectedError(pt2,eta2,err2/m)*m
        
 
+             
         if bOnlyCalib:
             pt1 = calibrator.getCorrectedPtMag(pt1,eta1,phi1)
             pt2 = calibrator.getCorrectedPtMag(pt2,eta2,phi2)
@@ -26,6 +29,7 @@ def correctDataSet(data,isData=True,ptCalib=False,errCalib=False,bOnlyCalib=Fals
             if ptCalib:
                 pt1 = calibrator.getCorrectedPt(pt1,eta1,phi1,1)
                 pt2 = calibrator.getCorrectedPt(pt2,eta2,phi2,-1)
+
 
 
             

@@ -150,6 +150,48 @@ class KalmanCalibrator(SimpleKalmanFilter):
             self.state.update(self.x,self.P)
 
         self.save(str(EV))    
+
+
+    def updateJPSISimple(self,data,EV,mean=3.09523,weight=1.0):
+        #loop in all events
+        for i in range(0,data.numEntries()):
+            line = data.get(i)
+
+            #calculate J/psi mass from matrix
+            v1=ROOT.TLorentzVector()
+            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
+                            line.find('etaRaw1').getVal(),
+                            line.find('phiRaw1').getVal(),
+                            0.1056583715)
+            
+            v2=ROOT.TLorentzVector()
+            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
+                            line.find('etaRaw2').getVal(),
+                            line.find('phiRaw2').getVal(),
+                            0.1056583715)
+            
+            v = v1+v2
+
+
+            z=ROOT.TVectorD(1)
+            z[0] = line.find('massRaw').getVal()/mean
+            R=ROOT.TMatrixD(1,1)
+            error = line.find('massErrRaw').getVal()/mean
+            R[0][0] =error*error/(weight*weight) 
+
+            H= self.jacobian(line,self.state)
+            h =self.h(line,self.state) 
+            
+            super(KalmanCalibrator, self).iterate(z,R,H,h)
+
+            if i % 20000 ==0:
+                print 'EVENT ---------',i
+                self.save(str(EV)+'_'+str(i))    
+
+
+            self.state.update(self.x,self.P)
+
+        self.save(str(EV))    
     
 
 

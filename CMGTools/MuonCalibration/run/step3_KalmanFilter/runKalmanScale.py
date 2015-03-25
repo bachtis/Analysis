@@ -8,19 +8,19 @@ jdata = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(rapidity)<0.9')
 print 'Jpsi data',jdata.numEntries()
 
 
-#builder = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
-#jmc = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(rapidity)<1.2')
-#print 'Jpsi MC',jmc.numEntries()
+builder = DataSetBuilder(pmap,w,'JMC_Input.root','data',1000000000)
+jmc = builder.tree.reduce('massRaw>3.0&&massRaw<3.2&&abs(rapidity)<0.9')
+print 'Jpsi MC',jmc.numEntries()
 
 
-#builder = DataSetBuilder(pmap,w,'ZMC_Input.root','data',1000000000)
-#zmc = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(rapidity)<3.2')
-#print 'ZMC ',zmc.numEntries()
+builder = DataSetBuilder(pmap,w,'ZMC_Input.root','data',1000000000)
+zmc = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(rapidity)<3.2')
+print 'ZMC ',zmc.numEntries()
 
 
-#builder = DataSetBuilder(pmap,w,'ZData_Input.root','data',1000000000)
-#zdata = builder.tree.reduce('massRaw>85&&massRaw<95')
-#print 'Z data ',zdata.numEntries()
+builder = DataSetBuilder(pmap,w,'ZData_Input.root','data',1000000000)
+zdata = builder.tree.reduce('massRaw>85&&massRaw<95&&abs(rapidity)<0.9')
+print 'Z data ',zdata.numEntries()
 
 
 ############################DATA SETS#################################
@@ -44,11 +44,12 @@ pmap1_1= PartitionMap(curvArr,[-0.9,0.9],[-math.pi,math.pi],"")
 pmap1_1.declareData('A',1.0)
 pmap1_1.declareData('K',0.0)
 
+
 infos = {}
 infos['A']={'map':pmap1_1,'error':0.005}
 infos['K']={'map':pmap1_1,'error':0.005}
 infos['B']={'map':pmap10_10,'error':200e-6}
-infos['M']={'map':pmap1_10,'error':0.1}
+infos['M']={'map':pmap1_10,'error':0.05}
 
 
 
@@ -91,9 +92,8 @@ def h(line,state):
     m2 = state.infos['M']['map'].getData('M',m2_bin)
 
 
-    term1 = a1-1.0+k1*e1*e1+1.0/(1+st1*m1*c1)+b1/c1
-    term2 = a2-1.0+k2*e2*e2+1.0/(1+st2*m2*c2)-b2/c2
-
+    term1 = a1+k1*e1*e1-st1*m1*c1+b1/c1
+    term2 = a2+k2*e2*e2-st2*m2*c2-b2/c2
 
     V[0]= math.sqrt(term1*term2)   
 
@@ -151,8 +151,8 @@ def jacobian(line,state):
     m2 = state.infos['M']['map'].getData('M',m2_bin)
 
 
-    term1 = a1-1.0+k1*e1*e1+1.0/(1+st1*m1*c1)+b1/c1
-    term2 = a2-1.0+k2*e2*e2+1.0/(1+st2*m2*c2)-b2/c2
+    term1 = a1+k1*e1*e1-st1*m1*c1+b1/c1
+    term2 = a2+k2*e2*e2-st2*m2*c2-b2/c2
 
     h= math.sqrt(term1*term2)   
 
@@ -188,24 +188,26 @@ def jacobian(line,state):
                 
         elif  data['name'] =='M':
             if data['bin']==m1_bin and (m1_bin !=m2_bin):
-                V[0][N] = (0.5/h) * (-st1*c1/((1+m1*st1*c1)*(1+m1*st1*c1)))*term2
+                V[0][N] = (0.5/h) * (-st1*c1)*term2
             elif data['bin']==m2_bin and (m1_bin !=m2_bin):
-                V[0][N] = (0.5/h) * (-st2*c2/((1+m2*st2*c2)*(1+m2*st2*c2)))*term1
+                V[0][N] = (0.5/h) * (-st2*c2)*term1
             elif data['bin']==m1_bin and (m1_bin ==m2_bin):
-                V[0][N] = (0.5/h) * (-st1*c1/((1+m1*st1*c1)*(1+m1*st1*c1)))*term2 + (0.5/h) *(-st2*c2/((1+m2*st2*c2)*(1+m2*st2*c2)))*term1
+                V[0][N] = (0.5/h) * (-st1*c1*term2-st2*c2*term1)
             else:    
                 V[0][N]=0.0
-
 
     return V
 
 
-calibrator = KalmanCalibrator(infos,'kalmanScale_data.root')
+
+calibrator = KalmanCalibrator(infos,'kalmanScale_test.root')
 calibrator.loadJPsiMatrix('../step1_KalmanInput_Jpsi/kalmanTargetJpsi_Data.root')
-#calibrator.loadZMatrix('kalmanTargetZ.root')
+calibrator.loadZMatrix('../KalmanTarget_Z/kalmanTargetZ_Data.root')
 calibrator.setModel(h,jacobian)
-#calibrator.updateZ(zdata,1)
-calibrator.updateJPSI(jdata,0)
+calibrator.updateJPSISimple(jdata,1)
+#calibrator.setModel(h,jacobianMIS)
+#@calibrator.updateZ(zdata,0)
+
 
 
 

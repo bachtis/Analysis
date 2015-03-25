@@ -100,6 +100,7 @@ class Unfolding(object):
 class AnalyticalUnfolding(object):
     def __init__(self,data,binscurv,mincurv,maxcurv):
         self.spectrum = ROOT.TH2F("spectrum","spectrum",binscurv,mincurv,maxcurv,binscurv,mincurv,maxcurv)
+        self.ebeSpectrum = ROOT.TProfile("ebeSpectrum","spectrum",2*binscurv,mincurv,maxcurv,0,10)
         self.x = ROOT.RooRealVar("x","x",1/1000.,1./5.)
         self.y = ROOT.RooRealVar("y","y",1./1000.,1./5.)
 
@@ -108,33 +109,65 @@ class AnalyticalUnfolding(object):
             line = data.get(evt)
             c1=line.find('curvRaw1').getVal()
             c2=line.find('curvRaw2').getVal()
-            self.spectrum.Fill(c1,c2)
+            e1=2*line.find('massErrRaw1').getVal()*c1/line.find('massRaw').getVal()
+            e2=2*line.find('massErrRaw1').getVal()*c1/line.find('massRaw').getVal()
 
+            self.spectrum.Fill(c1,c2)
+            self.ebeSpectrum.Fill(c1,e1*e1)
+            self.ebeSpectrum.Fill(c2,e2*e2)
             
 
         self.datahist = ROOT.RooDataHist("datahist","datahist",ROOT.RooArgList(self.x,self.y),self.spectrum)
         self.histpdf = ROOT.RooHistPdf("histpdf","histpdf",ROOT.RooArgSet(self.x,self.y),self.datahist,2)
+
+
+
+
         self.dx = self.histpdf.derivative(self.x)
         self.dy = self.histpdf.derivative(self.y)
+
+
+
+    def ebeDX(self,x):
+
+        binx=self.ebeSpectrum.GetXaxis().FindBin(x)
+        f=self.ebeSpectrum.GetBinContent(self.ebeSpectrum.GetBin(binx))
+            
+        if f==0:
+            return 0
+
+        x=self.ebeSpectrum.GetXaxis().GetBinCenter(binx)
+        if binx+1<=self.ebeSpectrum.GetNbinsX():
+            fp=self.ebeSpectrum.GetBinContent(self.ebeSpectrum.GetBin(binx+1))
+            xp=self.ebeSpectrum.GetXaxis().GetBinCenter(binx+1)
+        else:
+            fp=f
+            xp=x
+        if binx-1>=1:
+            fm=self.ebeSpectrum.GetBinContent(self.ebeSpectrum.GetBin(binx-1))
+            xm=self.ebeSpectrum.GetXaxis().GetBinCenter(binx-1)
+        else:
+            fm=f
+            xm=x
+
+        return (fp-fm)/(xp-xm)
+
+
 
     def getVal(self,c1,c2,sigma):
         self.x.setVal(c1)
         self.y.setVal(c2)
         fv = self.histpdf.getVal()
         dfx = self.dx.getVal()
-
 #        import pdb;pdb.set_trace()
-        if not (dfx==0 or fv==0 ):
-            fodf = fv/dfx
-            sqr = (1-4*sigma*sigma/(fodf*fodf)) 
-            if sqr<0:
-                print 'negative square root'
-                return 0
-                    
-            return c1-0.5*fodf*(1-math.sqrt(sqr))
-        else:
-            print 'error'
-            return 0
+
+
+        term1 = -sigma*sigma*dfx/fv
+        term2 = self.ebeDX(c1)
+
+        print 'terms',term1,term2
+
+        return c1+term1+term2
 
     def unfoldDataSet(self,data,updateMass = False):
         newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
@@ -154,32 +187,9 @@ class AnalyticalUnfolding(object):
             sigma1 = 2*e1*c1/m
             sigma2 = 2*e2*c2/m
 
-            self.x.setVal(c1)
-            self.y.setVal(c2)
-
-            fv = self.histpdf.getVal()
-            dfx = self.dx.getVal()
-            dfy = self.dy.getVal()
-
-            if not (dfx==0 or fv==0 ):
-                fodf = fv/dfx
-                sqr = (1-4*sigma1*sigma1/(fodf*fodf)) 
-                if sqr<0:
-                    bad=bad+1
-                    continue
-                    
-                uc = c1-0.5*fodf*(1-math.sqrt(sqr))
-                line.find('curvRaw1').setVal(uc)
-
-            if not (dfy==0 or fv==0 ):
-                fodf = fv/dfy
-                sqr = (1-4*sigma2*sigma2/(fodf*fodf)) 
-                if sqr<0:
-                    bad=bad+1
-                    continue
-                    
-                uc = c2-0.5*fodf*(1-math.sqrt(sqr))
-                line.find('curvRaw2').setVal(uc)
+            line.find("curvRaw1").setVal(self.getVal(c1,c2,sigma1))
+            line.find("curvRaw2").setVal(self.getVal(c2,c1,sigma2))
+            print 'before',c1,c2,'after',line.find("curvRaw1").getVal(),line.find("curvRaw2").getVal()
 
             if updateMass:
 
@@ -202,7 +212,6 @@ class AnalyticalUnfolding(object):
 
 
             newData.add(line)
-        print 'bad=',bad,'all',2*n
         return newData
 
 
