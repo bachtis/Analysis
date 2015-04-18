@@ -2,9 +2,11 @@
 #include "TH3F.h"
 #include "TH2F.h"
 #include "TH2D.h"
+#include "TH1I.h"
 #include "TProfile2D.h"
 #include "TRandom3.h"
-
+#include "TMatrixDSym.h"
+#include "TVectorD.h"
 class KalmanCalibrator {
  public:
   KalmanCalibrator(bool isData = false);
@@ -13,6 +15,9 @@ class KalmanCalibrator {
   double smear(double pt,double eta,bool reverse=false);
   double getCorrectedPtMag(double,double,double);
   double getCorrectedError(double pt,double eta,double error);
+  int getN();
+  void vary(int,int);
+  void varyClosure(int);
   void reset();
   void randomize();
 
@@ -22,10 +27,10 @@ class KalmanCalibrator {
 
 
  private:
+  double closure(double,double);
   TRandom * random_;
-  void randomizeHisto(TH1* );
   void resetHisto(TH1*,const TH1* );
-
+  int varyClosure_;
 
   bool isData_;
   TFile *file_;
@@ -53,5 +58,11 @@ class KalmanCalibrator {
   TH3F *ebe_B;
   TH3F *ebe_C;
 
+  TH3F *closure_;
+  TMatrixDSym *cholesky_;
+  TMatrixD *eigenvectors_;
+  TVectorD *eigenvalues_;
 
+  TH1I *covHistoMap_;
+  TH1I *covBinMap_;
 };
