@@ -73,6 +73,8 @@ class PartitionMap(object):
 
     def getData(self,name,bin):
         return self.data[name].GetBinContent(bin)
+    def getDataError(self,name,bin):
+        return self.data[name].GetBinError(bin)
 
     def addData(self,name,bin,data,error = 0.0):
         self.data[name].SetBinContent(bin,self.data[name].GetBinContent(bin)+data)

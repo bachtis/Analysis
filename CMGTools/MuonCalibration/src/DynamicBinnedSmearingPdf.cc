@@ -51,16 +51,15 @@ Double_t DynamicBinnedSmearingPdf::evaluate() const
 
 Int_t DynamicBinnedSmearingPdf::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
 {
-  if (matchArgs(allVars,analVars,mass)) return 1 ;
-  return 0;
+  //  if (matchArgs(allVars,analVars,mass)) return 1 ;
+  //  return 0;
+  return 1;
 }
 
 
 
 Double_t DynamicBinnedSmearingPdf::analyticalIntegral(Int_t code, const char* rangeName) const 
 {
-  switch(code) {
-  case 1:
     double sum=0.0;
     //    int binmin=data_->GetXaxis()->FindBin(mass.min(rangeName));
     //    int binmax=data_->GetXaxis()->FindBin(mass.max(rangeName));
@@ -69,10 +68,5 @@ Double_t DynamicBinnedSmearingPdf::analyticalIntegral(Int_t code, const char* ra
       for (int i=1;i<data_->GetNbinsX()+1;++i) 
 	sum=sum+resolution(data_->GetXaxis()->GetBinCenter(j)-data_->GetXaxis()->GetBinCenter(i))*data_->GetBinContent(i)*data_->GetXaxis()->GetBinWidth(i);
     return sum;
-  }
-
-
-
-  return 0;
 }
 

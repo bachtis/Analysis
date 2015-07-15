@@ -3,6 +3,7 @@ import os
 import array
 import datetime
 import copy
+import itertools
 class DataSetBuilder (object):
     def __init__(self,pmap,workspace,file,dataset,entries=100000000,noCurvCut =False ):
         self.map=pmap
@@ -78,11 +79,15 @@ class DataSetBuilder (object):
 
 
         
-    def save(self,filename):
+    def save(self,filename,mix=False):
+        if mix:
+            print 'Will MiX positive and negative'
         f = ROOT.TFile(filename,"RECREATE")
         f.cd()
         for bin,data in self.positiveSamples.iteritems():
             data.SetName("pos_"+str(bin))
+            if mix:
+                data.append(self.negativeSamples[bin])
             data.Write()
         for bin,data in self.negativeSamples.iteritems():
             data.SetName("neg_"+str(bin))
@@ -99,16 +104,16 @@ class DataSetBuilder (object):
     def loadPairs(self,filename):
         f = ROOT.TFile(filename)
         self.pairSamples=[]
+
+        bins=[]
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
-                    for l in range(1,self.map.bins_curv()+1):
-                        for m in range(1,self.map.bins_eta()+1):
-                            for n in range(1,self.map.bins_phi()+1):
+                    bins.append(self.map.bin(i,j,k))
 
-                                bin1 = self.map.bin(i,j,k)
-                                bin2 = self.map.bin(l,m,n)
-                                self.pairSamples.append({'bin1':bin1,'bin2':bin2,'data':f.Get(str(bin1)+'_'+str(bin2))})
+
+        for bin1,bin2 in itertools.combinations(bins,2):            
+            self.pairSamples.append({'bin1':bin1,'bin2':bin2,'data':f.Get(str(bin1)+'_'+str(bin2))})
 
     def load(self,filename):
         f = ROOT.TFile(filename)
@@ -459,16 +464,16 @@ class DataSetBuilder (object):
     def buildPairs(self):
         #first create the datasets
         pairSamples={}
+        
+        bins=[]
         for i in range(1,self.map.bins_curv()+1):
             for j in range(1,self.map.bins_eta()+1):
                 for k in range(1,self.map.bins_phi()+1):
-                    for l in range(1,self.map.bins_curv()+1):
-                        for m in range(1,self.map.bins_eta()+1):
-                            for n in range(1,self.map.bins_phi()+1):
+                    bins.append(self.map.bin(i,j,k))
 
-                                bin1 = self.map.bin(i,j,k)
-                                bin2 = self.map.bin(l,m,n)
-                                pairSamples[str(bin1)+'_'+str(bin2)] = ROOT.RooDataSet(str(bin1)+'_'+str(bin2),
+
+        for bin1,bin2 in itertools.combinations(bins,2):            
+            pairSamples[str(bin1)+'_'+str(bin2)] = ROOT.RooDataSet(str(bin1)+'_'+str(bin2),
                                                                                     str(bin1)+'_'+str(bin2),
                                                                                     self.tree.get())
         print 'Datasets created now filling'
@@ -486,12 +491,13 @@ class DataSetBuilder (object):
 
             bin1= self.map.binFromVals(curvRaw1,etaRaw1,phiRaw1)
             bin2= self.map.binFromVals(curvRaw2,etaRaw2,phiRaw2)
+
             if str(bin1)+'_'+str(bin2) in pairSamples:
                 pairSamples[str(bin1)+'_'+str(bin2)].add(line)
-
+            if str(bin2)+'_'+str(bin1) in pairSamples:
+                pairSamples[str(bin2)+'_'+str(bin1)].add(line)
 
         self.pairSamples = pairSamples
-            
         self.statisticsPairs()                            
 
     def statistics(self):
@@ -515,6 +521,7 @@ class DataSetBuilder (object):
 
         for sample,data in self.pairSamples.iteritems():
             entries.append(data.numEntries())
+            print sample,data.numEntries()
         print 'Minimum number of entries',str(min(entries)), ' out of ',str(self.tree.numEntries()),'input entries'
         entries = filter(lambda x: x>0,entries)
         print 'Minimum number of entries',str(min(entries)), ' out of ',str(self.tree.numEntries()),'input entries excl zero'

@@ -139,3 +139,10 @@ f.Close()
         w = f.Get('w')
         w.loadSnapshot("result")
         return ( w.var(var).getVal() , w.var(var).getError()) 
+
+    def get(self,bin):
+        f = ROOT.TFile(self.dir+'/'+self.inputFiles[bin])
+        w = f.Get('w')
+        w.loadSnapshot("result")
+        return w
+

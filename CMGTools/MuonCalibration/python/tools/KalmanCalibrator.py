@@ -80,14 +80,10 @@ class KalmanCalibrator(SimpleKalmanFilter):
                 h2.SetBinContent(bin,self.P[N1-1][N2-1])
         return h,h2
     
-    def loadJPsiMatrix(self,filename):
+    def loadTarget(self,filename):
         self.f=ROOT.TFile(filename)
-        self.JMATRIX=self.f.Get('mass_fit')
-        self.jpsiMatrix = self.JMATRIX.ProjectionY("jpsimatrix",1,1,1,1)
+        self.target=self.f.Get('target_0')
 
-    def loadZMatrix(self,filename):
-        self.f2=ROOT.TFile(filename)
-        self.zMatrix=self.f2.Get('mass_fit')
 
 
     def save(self,tag):
@@ -101,58 +97,7 @@ class KalmanCalibrator(SimpleKalmanFilter):
         
 
 
-    def updateJPSI(self,data,EV,weight=1.0):
-        if self.jpsiMatrix is None:
-            print 'MATRIX FOR J/psi not found'
-            return
-
-           
-        #loop in all events
-        for i in range(0,data.numEntries()):
-            line = data.get(i)
-
-            #calculate J/psi mass from matrix
-            v1=ROOT.TLorentzVector()
-            v1.SetPtEtaPhiM(1./line.find('curvRaw1').getVal(),
-                            line.find('etaRaw1').getVal(),
-                            line.find('phiRaw1').getVal(),
-                            0.1056583715)
-            
-            v2=ROOT.TLorentzVector()
-            v2.SetPtEtaPhiM(1./line.find('curvRaw2').getVal(),
-                            line.find('etaRaw2').getVal(),
-                            line.find('phiRaw2').getVal(),
-                            0.1056583715)
-            
-            v = v1+v2
-
-            matrix_bin = self.jpsiMatrix.GetXaxis().FindBin(v.Rapidity())
-            mean = self.jpsiMatrix.GetBinContent(matrix_bin)
-
-
-
-            z=ROOT.TVectorD(1)
-            z[0] = line.find('massRaw').getVal()/mean
-            R=ROOT.TMatrixD(1,1)
-            error = line.find('massErrRaw').getVal()/mean
-            R[0][0] =error*error/(weight*weight) 
-
-            H= self.jacobian(line,self.state)
-            h =self.h(line,self.state) 
-            
-            super(KalmanCalibrator, self).iterate(z,R,H,h)
-
-            if i % 20000 ==0:
-                print 'EVENT ---------',i
-                self.save(str(EV)+'_'+str(i))    
-
-
-            self.state.update(self.x,self.P)
-
-        self.save(str(EV))    
-
-
-    def updateJPSISimple(self,data,EV,mean=3.09523,weight=1.0):
+    def updateSimple(self,data,EV,meanFunc,width=0.0,weight=1.0):
         #loop in all events
         for i in range(0,data.numEntries()):
             line = data.get(i)
@@ -173,11 +118,13 @@ class KalmanCalibrator(SimpleKalmanFilter):
             v = v1+v2
 
 
+            mean = meanFunc(line.find('rapidity').getVal())
+
             z=ROOT.TVectorD(1)
             z[0] = line.find('massRaw').getVal()/mean
             R=ROOT.TMatrixD(1,1)
-            error = line.find('massErrRaw').getVal()/mean
-            R[0][0] =error*error/(weight*weight) 
+            error2 = (line.find('massErrRaw').getVal()*line.find('massErrRaw').getVal()+width*width)/(mean *mean)
+            R[0][0] =error2/(weight*weight) 
 
             H= self.jacobian(line,self.state)
             h =self.h(line,self.state) 
@@ -195,12 +142,8 @@ class KalmanCalibrator(SimpleKalmanFilter):
     
 
 
-    def updateZ(self,data,EV,weight=1.0):
+    def updateWithTarget(self,data,EV):
 
-        if self.zMatrix is None:
-            print 'MATRIX FOR Z not found'
-            return
-            
         #loop in all events
         for i in range(0,data.numEntries()):
             line = data.get(i)
@@ -220,14 +163,14 @@ class KalmanCalibrator(SimpleKalmanFilter):
             
             v = v1+v2
 
-            matrix_bin = self.zMatrix.GetXaxis().FindBin(v.Rapidity())
-            mean = self.zMatrix.GetBinContent(matrix_bin)
-            width = self.zMatrix.GetBinError(matrix_bin)
+            matrix_bin = self.target.GetBin(1,self.target.GetYaxis().FindBin(v.Rapidity()),1)
+            mean = self.target.GetBinContent(matrix_bin)
+            width = self.target.GetBinError(matrix_bin)
 
             z=ROOT.TVectorD(1)
             z[0] = line.find('massRaw').getVal()/mean
             R=ROOT.TMatrixD(1,1)
-            R[0][0] = ((line.find('massErrRaw').getVal()*line.find('massErrRaw').getVal())/(mean*mean) + line.find('massRaw').getVal()*line.find('massRaw').getVal()*width*width/(mean*mean*mean*mean))/(weight*weight)
+            R[0][0] = width*width/(mean*mean)
 
 
             H= self.jacobian(line,self.state)

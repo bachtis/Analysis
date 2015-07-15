@@ -42,7 +42,7 @@ def smearAbsolute(data,isData = True):
 
 
 def smearRelative(data,isData):
-    calibrator = ROOT.KalmanCalibrator(isData)
+    calibrator = ROOT.KalmanCalibratorParam(isData)
     newData = ROOT.RooDataSet("data","data",data.get())
     for i in range(0,data.numEntries()):
         line =data.get(i)
@@ -55,9 +55,10 @@ def smearRelative(data,isData):
         phi2 = line.find('phiRaw2').getVal()
         err2=line.find('massErrRaw2').getVal()
         m=line.find('massRaw').getVal()
-
+        print 'before',pt1,pt2
         pt1 = calibrator.smear(pt1,eta1)
         pt2 = calibrator.smear(pt2,eta2)
+        print 'after',pt1,pt2
 
             
         line.find('curvRaw1').setVal(1.0/pt1)
@@ -171,3 +172,21 @@ def smearFlat(data,shift = 1.0,error=1.0,updateMass = True):
         newData.add(line)
 
     return newData
+
+
+
+
+def createDataLike(data,gen):
+    random = ROOT.TRandom3(101082)
+    newData = ROOT.RooDataSet(data.GetName()+'cal',data.GetName(),data.get())
+    genEntries = gen.numEntries() 
+
+    for evt in range(0,data.numEntries()):
+        line = data.get(evt)
+
+        genLine = gen.get(int(random.Rndm()*genEntries))
+        line.find('massRaw').setVal(genLine.find('massRaw').getVal())
+        newData.add(line)
+
+    return newData
+

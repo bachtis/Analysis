@@ -24,7 +24,7 @@ def findOutliers(filename,hist='Cpos_0',threshold=0.01):
 def checkFile(filename):
     f=ROOT.TFile(filename)
     w=f.Get("w")
-    w.var('scale').Print()
+#    w.var('scale').Print()
     frame=w.var("massRaw").frame()
     w.data("data").plotOn(frame)
     w.pdf("model").plotOn(frame)
