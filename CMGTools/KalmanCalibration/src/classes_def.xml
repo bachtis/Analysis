@@ -1,3 +1,4 @@
 <lcgdict>
  <class name="KalmanCalibrator"/>
+ <class name="KalmanCalibratorParam"/>
 </lcgdict>
