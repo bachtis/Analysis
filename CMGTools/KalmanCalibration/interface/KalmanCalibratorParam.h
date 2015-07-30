@@ -58,7 +58,7 @@ class KalmanCalibratorParam {
   TH1F* b2_;
 
 
-  TProfile2D* smearing_;
+  TH3F* smearing_;
 
   TH3F *closure_;
   TMatrixDSym *cholesky_;

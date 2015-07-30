@@ -58,7 +58,7 @@ KalmanCalibratorParam::KalmanCalibratorParam(bool isData) {
   a2_ = (TH1F*)file_->Get("a2"); 
   b2_ = (TH1F*)file_->Get("b2");
  
-  smearing_ = (TProfile2D*)file_->Get("smearing");
+  smearing_ = (TH3F*)file_->Get("smearing");
   
 
 
@@ -109,7 +109,6 @@ void KalmanCalibratorParam::randomize() {
       shifted_A2->SetBinContent(bin,scale_A2->GetBinContent(bin)+value);
       break;
     case 3:
-      shifted_L->SetBinContent(bin,scale_L->GetBinContent(bin)+value);
       break;
     case 4:
       shifted_e->SetBinContent(bin,scale_e->GetBinContent(bin)+value);
@@ -325,16 +324,40 @@ void KalmanCalibratorParam::vary(int ii,int sigmas) {
 
 
 double KalmanCalibratorParam::smear(double pt,double eta) {
-  Int_t binx = smearing_->GetXaxis()->FindBin(1.0/pt);
+  Int_t binx = smearing_->GetXaxis()->FindBin(pt);
   if (binx==0)
     binx=1;
-  Int_t biny = smearing_->GetYaxis()->FindBin(eta);
-  Int_t bin = smearing_->GetBin(binx,biny);
+
+  if (binx==smearing_->GetNbinsX()+1)
+    binx=smearing_->GetNbinsX();
+
+  Int_t biny = smearing_->GetYaxis()->FindBin(fabs(eta));
+  Int_t bin = smearing_->GetBin(binx,biny,1);
   Double_t factor = smearing_->GetBinContent(bin);
-  if (factor<0.0)
+
+  if ((isData_ && factor>0) || ((!isData_) && factor<0))
     return pt;
 
-  factor = sqrt(factor);
+  //  if (factor<0.0)
+  //    return pt;
+
+  factor = sqrt(fabs(factor));
 
   return pt+random_->Gaus(0.0,factor*pt);
 }
+
+// double KalmanCalibratorParam::smear(double pt,double eta) {
+//   Int_t binx = smearing_->GetXaxis()->FindBin(1.0/pt);
+//   if (binx==0)
+//     binx=1;
+
+//   Int_t biny = smearing_->GetYaxis()->FindBin(eta);
+//   Int_t bin = smearing_->GetBin(binx,biny);
+//   Double_t factor = (smearing_->GetBinContent(bin));
+//   if (factor<0.0)
+//     return pt;
+
+//   factor = sqrt(fabs(factor));
+
+//   return pt+random_->Gaus(0.0,factor*pt);
+// }
