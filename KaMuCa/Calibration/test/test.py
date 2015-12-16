@@ -15,11 +15,16 @@ print 'correct the dpt/pt  a 40 geV muon at eta =1 that has dpt/pt=0.01'
 print c.getCorrectedError(40,1.0,0.01)
 
 
-print 'smear a 40 geV muon at eta=2.3 to match the data'
+print 'smear a 40 geV muon at eta=1.0 to match the data'
 print c.smear(40,1.0)
 
-print 'smear a 40 geV muon at eta=2.3 to match the data using also the EbE fluctuations for a muon of dpt/pt=0.01'
+print 'smear a 40 geV muon at eta=1.0 to match the data using also the EbE fluctuations for a muon of dpt/pt=0.01'
 print c.smearUsingEbE(40,1.0,0.01)
+
+
+
+print 'correct the dpt/pt of  a 40 geV muon at eta =1 that has dpt/pt=0.01 so that it matches the data resolution and not the MC one'
+print c.getCorrectedErrorAfterSmearing(40,1.0,0.01)
 
 
 print 'propagate the statistica error of the calibratio to a + 40 GeV muon at eta=phi=0'

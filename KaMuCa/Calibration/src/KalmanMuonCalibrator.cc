@@ -200,6 +200,33 @@ double KalmanMuonCalibrator::getCorrectedError(double pt,double eta,double error
 }
 
 
+double KalmanMuonCalibrator::getCorrectedErrorAfterSmearing(double pt,double eta,double error) {
+  Int_t bin = aEBE_->GetXaxis()->FindBin(eta);
+  
+  double a2 = aEBE_->GetBinContent(bin);
+  double b2 = bEBE_->GetBinContent(bin);
+  double c2 = cEBE_->GetBinContent(bin);
+  double d2 = dEBE_->GetBinContent(bin);
+  double aTARGET = aTARGET_->GetBinContent(bin);
+  double bTARGET = bTARGET_->GetBinContent(bin);
+  double cTARGET = cTARGET_->GetBinContent(bin);
+  double dTARGET = dTARGET_->GetBinContent(bin);
+
+  double pt2=pt*pt;
+  
+  //new ebe^2 = ebe^2 + sigma^2-ebe_avg^2
+
+  double error2=error*error + aTARGET+bTARGET/(1+dTARGET/pt2)+cTARGET*pt2 -(a2+b2/(1+d2/pt2)+c2*pt2);
+
+  if (error2<0) {
+    //    printf("Got Negative EbE !! Will ignore and not correct the ebe of this muon pt=%f , eta=%f ,error=%f ,residual2=%f\n",pt,eta,error,error2-error*error); 
+    return error;
+  }
+
+  return sqrt(error2);
+}
+
+
 
 
 int KalmanMuonCalibrator::getN() {

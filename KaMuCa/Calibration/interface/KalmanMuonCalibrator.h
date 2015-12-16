@@ -16,6 +16,7 @@ class KalmanMuonCalibrator {
   double smearUsingEbE(double pt,double eta,double error);
   double getCorrectedPtMag(double,double,double);
   double getCorrectedError(double pt,double eta,double error);
+  double getCorrectedErrorAfterSmearing(double pt,double eta,double error);
 
   int getN();
   void vary(int,int);
