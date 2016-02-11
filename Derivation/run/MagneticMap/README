@@ -1,9 +1,0 @@
-This correction corrects the muon momentum by 
-the relative difference between the approximate 
-magnetic field map used in the track reconstruction 
-and the full map as calculated by NMR
-
-To read the field ma p in <7_0_0
-do cmsRun intBl.py
-
-Then run makeRatio.py to make the calibration file 

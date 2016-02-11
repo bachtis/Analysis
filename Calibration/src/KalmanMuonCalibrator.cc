@@ -12,7 +12,7 @@ KalmanMuonCalibrator::KalmanMuonCalibrator(const std::string& filename) {
   edm::FileInPath path("KaMuCa/Calibration/data/"+filename+".root");
   file_ = new TFile(path.fullPath().c_str());
   isData_ = (filename.find("DATA")!=std::string::npos);
-      
+
 
   //inputs
 
@@ -156,8 +156,8 @@ double KalmanMuonCalibrator::getCorrectedPt(double pt,double eta,double phi,int 
 
     double tanTheta = 2.0/(exp(eta)-exp(-eta));
 
-    //    double mag=A1;
     double mag=A1+A2/(tanTheta*tanTheta);
+    //    double mag=A1+A2*eta*eta;
    curvature = mag*curvature -e*sinTheta*curvature*curvature+charge*B;
     return (1.0/curvature)*(1.0+varyClosure_*closure(pt,eta));
 }
@@ -194,7 +194,7 @@ double KalmanMuonCalibrator::getCorrectedError(double pt,double eta,double error
   double error2=error*error + aSRC+bSRC/(1+dSRC/pt2)+cSRC*pt2 -(a2+b2/(1+d2/pt2)+c2*pt2);
 
   if (error2<0) {
-    printf("Got Negative EbE !! Will ignore and not correct the ebe of this muon pt=%f , eta=%f ,error=%f ,residual2=%f\n",pt,eta,error,error2-error*error); 
+    //    printf("Got Negative EbE !! Will ignore and not correct the ebe of this muon pt=%f , eta=%f ,error=%f ,residual2=%f\n",pt,eta,error,error2-error*error); 
     return error;
   }
 
@@ -316,13 +316,15 @@ double KalmanMuonCalibrator::smear(double pt,double eta) {
 
   double resolutionSRC2 = aSRC+bSRC/(1+dSRC/(pt*pt))+cSRC*pt*pt;
   double resolutionTARGET2 = aTARGET+bTARGET/(1+dTARGET/(pt*pt))+cTARGET*pt*pt;
+
+  //  printf ("Resolution SRC=%f,Resolution TARGET=%f a=%f b=%f c=%f d=%f ratio=%f\n",sqrt(resolutionSRC2),sqrt(resolutionTARGET2),sqrt(fabs(aTARGET-aSRC)),sqrt(fabs(bTARGET/(1+dTARGET/(pt*pt))-bSRC/(1+dSRC/(pt*pt)))),sqrt(fabs(cTARGET*pt*pt-cSRC*pt*pt)),sqrt(fabs(dTARGET-dSRC)),sqrt(resolutionTARGET2/resolutionSRC2));
   Double_t factor = resolutionTARGET2-resolutionSRC2;
   if (factor<0) {
     //    printf("target has better resolution than source-not smearing pt=%f,eta=%f RSRC=%f RTGR=%f\n",pt,eta,resolutionTARGET2,resolutionSRC2);
     return pt;
   }
-  factor = sqrt(fabs(factor))/pt;
-  float smeared = random_->Gaus(1.0/pt,factor);
+  factor = sqrt(fabs(factor));
+  float smeared = random_->Gaus(1.0,factor)/pt;
   return 1.0/smeared;
 }
 

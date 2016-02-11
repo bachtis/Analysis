@@ -1,8 +1,0 @@
-<lcgdict>
- <class name="RooGaussianSumPdf"/>
- <class name="RooPullSumPdf"/>
- <class name="RooGaussianSumPdfWithSigma"/>
- <class name="SimpleKalmanCalculator"/>
- <class name="NtupleProcessor"/>
- <class name="NtupleProcessorLuca"/>
-</lcgdict>

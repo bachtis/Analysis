@@ -1,7 +1,7 @@
 import ROOT
 
 # LOAD 
-c=ROOT.KalmanMuonCalibrator("MC_76X_13TeV")
+c=ROOT.KalmanMuonCalibrator("MC_74X_13TeV")
 
 print 'correct the pt of a 40 GeV muon + at eta=phi=0.0'
 
