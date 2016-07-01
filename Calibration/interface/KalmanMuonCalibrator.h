@@ -13,11 +13,10 @@ class KalmanMuonCalibrator {
   KalmanMuonCalibrator(const std::string&);
   double getCorrectedPt(double pt,double eta,double phi,int charge);
   double smear(double pt,double eta);
-  double smearUsingEbE(double pt,double eta,double error);
   double smearForSync(double pt,double eta);
   double getCorrectedPtMag(double,double,double);
   double getCorrectedError(double pt,double eta,double error);
-  double getCorrectedErrorAfterSmearing(double pt,double eta,double error);
+
 
   int getN();
   void vary(int,int);
@@ -38,37 +37,50 @@ class KalmanMuonCalibrator {
 
   bool isData_;
   TFile *file_;
+
+
+  //magnetic map correction
   TH2F *magnetic; 
 
 
+  //precorrection from Z
+  //  TH3F *scale_P1; 
+  //  TH3F *scale_P2; 
+
+
+  TH3F *scale_A; 
+  TH3F *scale_K; 
+  TH3F *scale_L; 
   TH3F *scale_A1; 
   TH3F *scale_A2; 
+  TH3F *scale_A3; 
+  TH3F *scale_A4; 
   TH3F *scale_e;
   TH3F *scale_B0;
   TH3F *scale_B1;
   TH3F *scale_B2;
-  TH3F *scale_C1;
-  TH3F *scale_C2;
+  TH3F *scale_B3;
+  TH3F *scale_B4;
 
+  TH3F *shifted_A; 
+  TH3F *shifted_K; 
+  TH3F *shifted_L; 
   TH3F *shifted_A1; 
   TH3F *shifted_A2; 
+  TH3F *shifted_A3; 
+  TH3F *shifted_A4; 
   TH3F *shifted_e;
   TH3F *shifted_B0;
   TH3F *shifted_B1;
   TH3F *shifted_B2;
-  TH3F *shifted_C1;
-  TH3F *shifted_C2;
+  TH3F *shifted_B3;
+  TH3F *shifted_B4;
 
 
-  TH1D* aSRC_;
-  TH1D* bSRC_;
-  TH1D* cSRC_;
-  TH1D* dSRC_;
-  TH1D* aTARGET_;
-  TH1D* bTARGET_;
-  TH1D* cTARGET_;
-  TH1D* dTARGET_;
-
+  TH1D* aRES_;
+  TH1D* bRES_;
+  TH1D* cRES_;
+  TH1D* dRES_;
   TH1D* aEBE_;
   TH1D* bEBE_;
   TH1D* cEBE_;
