@@ -141,6 +141,7 @@ void KalmanMuonCalibrator::resetHisto(TH1* histo,const TH1* ref) {
 
 
 KalmanMuonCalibrator::~KalmanMuonCalibrator() {
+  file_->Close();
 }
 
 
