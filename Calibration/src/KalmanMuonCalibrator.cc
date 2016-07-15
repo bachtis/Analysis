@@ -208,7 +208,7 @@ double KalmanMuonCalibrator::getCorrectedError(double pt,double eta,double error
   double a2 = aEBE_->GetBinContent(bin);
 
   bin = bEBE_->GetXaxis()->FindBin(eta); 
-  double b2 = bEBE_->GetBinContent(bin);
+  double f = bEBE_->GetBinContent(bin);
   bin = cEBE_->GetXaxis()->FindBin(eta); 
   double c2 = cEBE_->GetBinContent(bin);
 
@@ -216,10 +216,13 @@ double KalmanMuonCalibrator::getCorrectedError(double pt,double eta,double error
   double d2 = dEBE_->GetBinContent(bin);
 
   double pt2=pt*pt;
+
+
+  //  printf("%f %f %f %f %f\n",a2,b2,c2,d2,pt2); 
   
   //new ebe^2 = ebe^2 + sigma^2-ebe_avg^2
 
-  double error2=error*error + a2+b2/(1+d2/pt2)+c2*pt2;
+  double error2=error*error + a2+a2*f/(1+d2/pt2)+c2*pt2;
 
     if (error2<0) {
     //    printf("Got Negative EbE !! Will ignore and not correct the ebe of this muon pt=%f , eta=%f ,error=%f ,residual2=%f\n",pt,eta,error,error2-error*error); 
