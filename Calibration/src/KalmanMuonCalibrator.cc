@@ -146,10 +146,22 @@ KalmanMuonCalibrator::~KalmanMuonCalibrator() {
 
 
 double KalmanMuonCalibrator::closure(double pt,double eta) {
-  Int_t bin = closure_->GetBin(
-			       closure_->GetXaxis()->FindBin(pt),	       
-			       closure_->GetYaxis()->FindBin(fabs(eta)),
-			       1);
+  Int_t binx = closure_->GetXaxis()->FindBin(pt);
+  Int_t biny = closure_->GetYaxis()->FindBin(fabs(eta));
+  Int_t bin = closure_->GetBin(binx, biny, 1);
+
+  // If we're outside the valid pt range, use the first/last bin
+  if(binx > closure_->GetNbinsX()) // overflow
+    {
+      binx -= 1;
+      bin = closure_->GetBin(binx, biny, 1);
+    }
+  if(!binx) // underflow
+    {
+      binx = 1;
+      bin = closure_->GetBin(binx, biny, 1);
+    }
+
   return closure_->GetBinContent(bin)-1.0;
 }
 
