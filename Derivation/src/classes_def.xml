@@ -1,0 +1,6 @@
+<lcgdict>
+ <class name="RooGaussianSumPdf"/>
+ <class name="RooGaussianSumPdfWithSigma"/>
+ <class name="NtupleProcessor"/>
+ <class name="NtupleProcessorLuca"/>
+</lcgdict>
