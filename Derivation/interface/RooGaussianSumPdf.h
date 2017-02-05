@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "RooDataSet.h"
+#include "RooDataHist.h"
 #include "TH1F.h"
 #include "TRandom.h"
 
@@ -23,7 +23,7 @@ public:
 		      RooAbsReal& _scale,
 		      RooAbsReal& _error1,
 		      RooAbsReal& _error2,
- 		      const RooDataSet& data,
+ 		      const RooDataHist& data,
 		      const char* varName);
 
 

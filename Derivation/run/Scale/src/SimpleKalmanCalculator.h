@@ -8,12 +8,13 @@
 #include "TFile.h"
 class SimpleKalmanCalculator  {
  public:
-  SimpleKalmanCalculator(unsigned int,double*);
+  SimpleKalmanCalculator(unsigned int,double*,double*);
   ~SimpleKalmanCalculator();
   void iterate(double residual,double resolution,const double* H);
   const TMatrixDSym* P() {
     return P_;
   }
+
 
 
  private:

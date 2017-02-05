@@ -16,10 +16,35 @@ main (int argc, char **argv)
   }
   KalmanMuonCalibrator *calibrator = new KalmanMuonCalibrator();
 
-  for (int i=1;i<argc;++i) {
-    calibrator->processFile(argv[i],"data_13");
+
+  opterr = 0;
+  bool MC=false;
+  int c;
+
+  while ((c = getopt (argc, argv, "ml:")) != -1)
+    switch (c) {
+    case 'm':
+      MC=true;
+      break;
+    case 'l':
+      calibrator->load(optarg);
+      break;
+    }
+
+
+
+  for (int i=optind;i<argc;++i) {
+    if (MC)
+      calibrator->processFileMC(argv[i],"tree");
+    else
+       calibrator->processFile(argv[i],"tree");
+    char* newFile;
+    if(asprintf(&newFile,"preview_%s",argv[i])<0)
+      continue;
+    calibrator->save(newFile);
   }
 
+  calibrator->save("calibration.root");
   delete calibrator;
   return 0;
 }

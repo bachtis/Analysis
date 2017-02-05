@@ -16,6 +16,7 @@ class KalmanMuonCalibrator {
   double smearForSync(double pt,double eta);
   double getCorrectedPtMag(double,double,double);
   double getCorrectedError(double pt,double eta,double error);
+  double getResolution(double pt,double eta);
 
 
   int getN();
@@ -30,68 +31,44 @@ class KalmanMuonCalibrator {
 
 
  private:
+  enum  Measurement {A,K,L,A11,A12,A21,A22,A31,A32,e,e2,B0,B11,B12,B21,B22,B31,B32};
+  unsigned int getBin(Measurement measurement,float eta);
+  double getData(Measurement histo,float eta);
+
   double closure(double,double);
   TRandom * random_;
-  void resetHisto(TH1*,const TH1* );
+  void resetHisto();
   int varyClosure_;
 
   bool isData_;
-  TFile *file_;
+  TFile *scaleFile_;
+  TFile *magneticFile_;
+  TFile *resolutionFile_;
+
 
 
   //magnetic map correction
-  TH2F *magnetic; 
+  TH2F *magnetic_; 
+
+  //Scale Calibration
+  TH1D* calib_;
+  TH1D* shifted_calib_;
 
 
-  //precorrection from Z
-  //  TH3F *scale_P1; 
-  //  TH3F *scale_P2; 
+  //Resolution
+  TH1D* aRes_,*bRes_,*cRes_,*dRes_;
+  TH1D* aEbE_,*bEbE_,*cEbE_,*dEbE_;
 
 
-  TH3F *scale_A; 
-  TH3F *scale_K; 
-  TH3F *scale_L; 
-  TH3F *scale_A1; 
-  TH3F *scale_A2; 
-  TH3F *scale_A3; 
-  TH3F *scale_A4; 
-  TH3F *scale_e;
-  TH3F *scale_B0;
-  TH3F *scale_B1;
-  TH3F *scale_B2;
-  TH3F *scale_B3;
-  TH3F *scale_B4;
-
-  TH3F *shifted_A; 
-  TH3F *shifted_K; 
-  TH3F *shifted_L; 
-  TH3F *shifted_A1; 
-  TH3F *shifted_A2; 
-  TH3F *shifted_A3; 
-  TH3F *shifted_A4; 
-  TH3F *shifted_e;
-  TH3F *shifted_B0;
-  TH3F *shifted_B1;
-  TH3F *shifted_B2;
-  TH3F *shifted_B3;
-  TH3F *shifted_B4;
-
-
-  TH1D* aRES_;
-  TH1D* bRES_;
-  TH1D* cRES_;
-  TH1D* dRES_;
-  TH1D* aEBE_;
-  TH1D* bEBE_;
-  TH1D* cEBE_;
-  TH1D* dEBE_;
-
-
-
-
-  TH3F *closure_;
+  //For stat error
   TMatrixD *eigenvectors_;
   TVectorD *eigenvalues_;
-  TH1I *covHistoMap_;
-  TH1I *covBinMap_;
+
+  //Navigation
+  unsigned int nEtaBins_;
+  TAxis* etaAxis_;
+  unsigned int nMaterialEtaBins_;
+  TAxis* etaMaterialAxis_;
+
+
 };

@@ -6,17 +6,20 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include <math.h>
-#include "RooArgSet.h"
 #include "TAxis.h"
 #include "TFile.h"
-#include "RooDataSet.h"
+#include "TTree.h"
 class KalmanMuonCalibrator {
  public:
   KalmanMuonCalibrator();
   ~KalmanMuonCalibrator();
 
   void processFile(const char*,const char*);
-  enum  Measurement {A,K,L,A11,A12,A21,A22,A31,A32,e,B0,B11,B12,B21,B22,B31,B32};
+  void processFileMC(const char*,const char*);
+  void save(const char*);
+  void load(const char*);
+  enum  Measurement {A,K,L,A11,A12,A21,A22,A31,A32,e,e2,B0,B11,B12,B21,B22,B31,B32};
+
 
  private:
 
@@ -34,9 +37,9 @@ class KalmanMuonCalibrator {
   void setData(Measurement measurement,float eta,double data);
   void addDerivative(Measurement measurement,float eta,double data);
   void resetDerivative();
-  void processLine(const RooArgSet*);
+  void processLine(double c1,double eta1,double phi1,double c2,double eta2,double phi2,double scale,double resolution,int Z);
   SimpleKalmanCalculator * calculator_;
-
+  TMatrixDSym correlationMatrix();
 
   
 };

@@ -10,8 +10,8 @@ RooGaussianSumPdf::	RooGaussianSumPdf(const char *name, const char *title,
 			      RooAbsReal& _scale,
 			      RooAbsReal& _error1,
 			      RooAbsReal& _error2,
-					  const RooDataSet& _data,
-					  const char* varName):
+			      const RooDataHist& _data,
+ 			      const char* varName):
 
 RooAbsPdf(name,title),
 mass("mass","mass",this,_mass),

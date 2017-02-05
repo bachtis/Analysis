@@ -3,4 +3,7 @@
  <class name="RooGaussianSumPdfWithSigma"/>
  <class name="NtupleProcessor"/>
  <class name="NtupleProcessorLuca"/>
+ <class name="DataSetMaker"/>
+ <class name="DataSetMaker2D"/>
+ <class name="MCEBEEstimator"/>
 </lcgdict>

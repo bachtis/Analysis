@@ -5,15 +5,17 @@ SOURCES= SimpleKalmanCalculator.cc KalmanMuonCalibrator.cc calibrate.cc
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=calibrate
 
-all: $(SOURCES) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+all: $(SOURCES) $(EXECUTABLE) $(EXECUTABLEMC)
+
+$(EXECUTABLE): $(OBJECTS) 
 	$(CC)  $(OBJECTS) -o $@ $(LDFLAGS)
+
 
 .cc.o:
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm ./*~ ./*.o ./calibrate
+	rm ./*~ ./*.o ./calibrate 
 
 
