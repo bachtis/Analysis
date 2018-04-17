@@ -1,16 +1,19 @@
-#include "KaMuCa/Derivation/interface/DataSetMaker.h"
+#include "KaMuCa/Derivation/interface/DataEBEEstimator.h"
 #include "TLorentzVector.h"
 #include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
 
-DataSetMaker::DataSetMaker(const std::string& outputFileName,const TH3* coords, int genMass, int bins,double min,double max, const char* calib,int calibOpt): 
+DataEBEEstimator::DataEBEEstimator(const std::string& outputFileName,const TH3* coords,int genMass,int bins,double min,double max, const char* calib): 
   coords_(coords),
-  doGenMass_(genMass),
-  doCalib_(calibOpt)
+  doGenMass_(genMass)
 {
   fOut = new TFile(outputFileName.c_str(),"RECREATE");
   fOut->cd();
-  if (calibOpt>0) {
+  if (strlen(calib)==0) {
+    doCalib_=false;
+  }
+  else {
     calib_ = new KalmanMuonCalibrator(calib);
+    doCalib_=true;
   }
   int bin;
   for (int i=1;i<coords->GetNbinsX()+1;++i) {
@@ -29,7 +32,7 @@ DataSetMaker::DataSetMaker(const std::string& outputFileName,const TH3* coords, 
 }
 
 
-void DataSetMaker::close(){
+void DataEBEEstimator::close(){
   fOut->cd();
   int bin;
   for (int i=1;i<coords_->GetNbinsX()+1;++i) {
@@ -43,7 +46,7 @@ void DataSetMaker::close(){
   fOut->Close();
 }
 
-void DataSetMaker::processTree(const std::string&fileName,const std::string& cut,int lepton) {
+void DataEBEEstimator::processTree(const std::string&fileName,const std::string& cut) {
   TFile *fIn = new TFile(fileName.c_str()); 
   TTree *t = (TTree*)fIn->Get("tree");
   //reduce it!
@@ -55,9 +58,6 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
   float pt2;
   float c1;
   float c2;
-  float gc1;
-  float gc2;
-
   float eta1;
   float eta2;
   float phi1;
@@ -71,8 +71,6 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
 
   reduced->SetBranchAddress("c1",&c1);
   reduced->SetBranchAddress("c2",&c2);
-  reduced->SetBranchAddress("gc1",&gc1);
-  reduced->SetBranchAddress("gc2",&gc2);
   reduced->SetBranchAddress("pt1",&pt1);
   reduced->SetBranchAddress("pt2",&pt2);
   reduced->SetBranchAddress("eta1",&eta1);
@@ -90,35 +88,28 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
   TLorentzVector v2(1,1,1,1);
   int entries=reduced->GetEntries();
   int bin1,bin2,binx,biny,binz;
-  double x=0.0;
+  float x=0.0;
 
 
   TRandom *random = new TRandom(10101982);
 
   for (int i=0;i<entries;++i) {
     reduced->GetEntry(i);
-    if (doCalib_==1) {
+    if (doCalib_) {
       pt1 = calib_->getCorrectedPt(pt1,eta1,phi1,1);
       pt2 = calib_->getCorrectedPt(pt2,eta2,phi2,-1);
     }
-    if (doCalib_==2) {
-      pt1 = calib_->getCorrectedPtMag(pt1,eta1,phi1);
-      pt2 = calib_->getCorrectedPtMag(pt2,eta2,phi2);
-    }
-    if (doCalib_==3) {
-      pt1 = calib_->getPreCorrectedPt(pt1,eta1,phi1,1);
-      pt2 = calib_->getPreCorrectedPt(pt2,eta2,phi2,-1);
-    }
-
     c1=1.0/pt1;
     c2=1.0/pt2;
     v1.SetPtEtaPhiM(pt1,eta1,phi1,0.105);
     v2.SetPtEtaPhiM(pt2,eta2,phi2,0.105);
     mass=(v1+v2).M();
 
-    binx=coords_->GetXaxis()->FindBin(pt1);
-    biny=coords_->GetYaxis()->FindBin(eta1);
-    binz=coords_->GetZaxis()->FindBin(phi1);
+
+
+    binx=coords_->GetXaxis()->FindBin(eta1);
+    biny=coords_->GetYaxis()->FindBin(pt1);
+    binz=coords_->GetZaxis()->FindBin(pt2);
 
     if (binx==0||binx==coords_->GetNbinsX()+1) 
       continue;
@@ -131,9 +122,9 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
     bin1 = coords_->GetBin(binx,biny,binz);
 
 
-    binx=coords_->GetXaxis()->FindBin(pt2);
-    biny=coords_->GetYaxis()->FindBin(eta2);
-    binz=coords_->GetZaxis()->FindBin(phi2);
+    binx=coords_->GetXaxis()->FindBin(eta2);
+    biny=coords_->GetYaxis()->FindBin(pt1);
+    binz=coords_->GetZaxis()->FindBin(pt2);
 
     if (binx==0||binx==coords_->GetNbinsX()+1) 
       continue;
@@ -144,32 +135,16 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
 
     bin2 = coords_->GetBin(binx,biny,binz);
 
-
+    if (bin1!=bin2)
+      continue;
+    
+    if (doGenMass_==0)
+      x=mass;
     if (doGenMass_==1)
       x=genMass;
-    else if (doGenMass_==2)
-      x = genMass+random->Gaus(0.0,massErr);
-    else if (doGenMass_==3)
-      x =c1;
-    else if (doGenMass_==4)
-      x =c2;
-    else if (doGenMass_==5)
-      x =gc1;
-    else if (doGenMass_==6)
-      x =gc2;
 
-    else
-      x=mass;
 
-    if (lepton==1)
-      histoMap_[bin1]->Fill(x);
-
-    if (lepton==2)
       histoMap_[bin2]->Fill(x);
-
-    if (lepton==3 && bin1==bin2)
-      histoMap_[bin2]->Fill(x);
-
 
     if (i % 1000000==0)
 	printf("Processed %d \%d entries\n",i,entries);

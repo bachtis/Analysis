@@ -14,7 +14,9 @@ main (int argc, char **argv)
     printf("No input files specified");
     return 0; 
   }
-  KalmanMuonCalibrator *calibrator = new KalmanMuonCalibrator();
+
+  KalmanMuonCalibrator *calibrator=new KalmanMuonCalibrator();
+
 
 
   opterr = 0;

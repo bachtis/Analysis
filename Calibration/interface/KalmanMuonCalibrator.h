@@ -12,6 +12,7 @@ class KalmanMuonCalibrator {
   KalmanMuonCalibrator();
   KalmanMuonCalibrator(const std::string&);
   double getCorrectedPt(double pt,double eta,double phi,int charge);
+  double getPreCorrectedPt(double pt,double eta,double phi,int charge);
   double smear(double pt,double eta);
   double smearForSync(double pt,double eta);
   double getCorrectedPtMag(double,double,double);
@@ -31,9 +32,9 @@ class KalmanMuonCalibrator {
 
 
  private:
-  enum  Measurement {A,K,L,A11,A12,A21,A22,A31,A32,e,e2,B0,B11,B12,B21,B22,B31,B32};
-  unsigned int getBin(Measurement measurement,float eta);
-  double getData(Measurement histo,float eta);
+  enum  Measurement {A,K,e,B,L};
+  unsigned int getBin(Measurement measurement,float eta,float phi);
+  double getData(Measurement histo,float eta,float phi);
 
   double closure(double,double);
   TRandom * random_;
@@ -42,6 +43,10 @@ class KalmanMuonCalibrator {
 
   bool isData_;
   TFile *scaleFile_;
+  TFile *precalibFile_;
+  TH1D* precalibA_;
+  TH1D* precalibB_;
+
   TFile *magneticFile_;
   TFile *resolutionFile_;
 
@@ -67,8 +72,12 @@ class KalmanMuonCalibrator {
   //Navigation
   unsigned int nEtaBins_;
   TAxis* etaAxis_;
-  unsigned int nMaterialEtaBins_;
+  unsigned int nEtaMaterialBins_;
   TAxis* etaMaterialAxis_;
+
+  unsigned int nPhiBins_;
+  TAxis* phiAxis_;
+
 
 
 };

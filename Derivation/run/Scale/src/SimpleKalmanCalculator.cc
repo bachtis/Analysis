@@ -58,3 +58,21 @@ SimpleKalmanCalculator::iterate(double residual,double resolution, const double*
 }
 
 
+
+// void 
+// SimpleKalmanCalculator::iterate2D(const TMatrixD& residual,const TMatrixDSym& resolution,const TMatrixD& H) {
+//   TMatrixDSym S(P_->Similarity(H),TMatrixDSym::kPlus,resolution);
+//   S.Invert();
+//   TMatrixD PH(*P_,TMatrixD::kMult,H);
+//   TMatrixD K(PH,TMatrixD::kMult,S);
+//   TMatrixD Ky(K,TMatrixD::kMult,residual);
+//   for (unsigned int i=0;i<N_;++i)
+//     (x_)[i] = (x_)[i]+Ky[0][i];
+  
+//   PH.T();
+//   TMatrixD KHP(K,TMatrixD::kMult,PH);
+//   P_->Minus(KHP,*P_);
+ 
+// }
+
+

@@ -15,10 +15,10 @@
 
 
 
-class RooGaussianSumPdf : public RooAbsPdf {
+class RooGaussianSumPdfRelative : public RooAbsPdf {
 public:
-	RooGaussianSumPdf() {} ;
-	RooGaussianSumPdf(const char *name, const char *title,
+	RooGaussianSumPdfRelative() {} ;
+	RooGaussianSumPdfRelative(const char *name, const char *title,
 		      RooAbsReal& _mass,
 		      RooAbsReal& _scale,
 		      RooAbsReal& _error1,
@@ -28,9 +28,9 @@ public:
 
 
 
-	RooGaussianSumPdf(const RooGaussianSumPdf& other, const char* name=0) ;
-	virtual TObject* clone(const char* newname) const { return new RooGaussianSumPdf(*this,newname); }
-	inline virtual ~RooGaussianSumPdf() { }
+	RooGaussianSumPdfRelative(const RooGaussianSumPdfRelative& other, const char* name=0) ;
+	virtual TObject* clone(const char* newname) const { return new RooGaussianSumPdfRelative(*this,newname); }
+	inline virtual ~RooGaussianSumPdfRelative() { }
 
 	Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
 	Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
@@ -50,6 +50,6 @@ protected:
 private:
 
 
-	ClassDef(RooGaussianSumPdf,1) // Your description goes here...                                                                                                   
+	ClassDef(RooGaussianSumPdfRelative,1) // Your description goes here...                                                                                                   
 	  
 };

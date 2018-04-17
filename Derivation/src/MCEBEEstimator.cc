@@ -77,8 +77,8 @@ void MCEBEEstimator::processTree(const std::string&fileName,const std::string& c
     c1=random->Gaus(gc1,cErr1*gc1);
     c2=random->Gaus(gc2,cErr2*gc2);
  
-    resolutionRef_->Fill(gpt1,eta1,c1/gc1);
-    resolutionRef_->Fill(gpt2,eta2,c2/gc2);
+    resolutionRef_->Fill(gpt1,eta1,pt1*gc1);
+    resolutionRef_->Fill(gpt2,eta2,pt2*gc2);
 
 
 

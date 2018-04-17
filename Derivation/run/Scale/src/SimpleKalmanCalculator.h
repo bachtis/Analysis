@@ -11,6 +11,7 @@ class SimpleKalmanCalculator  {
   SimpleKalmanCalculator(unsigned int,double*,double*);
   ~SimpleKalmanCalculator();
   void iterate(double residual,double resolution,const double* H);
+  //  void iterate2D(const TMatrixD& residual,const TMatrixDSym& resolution,const TMatrixD& H);
   const TMatrixDSym* P() {
     return P_;
   }

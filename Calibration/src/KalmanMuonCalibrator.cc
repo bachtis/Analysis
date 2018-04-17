@@ -8,6 +8,11 @@ KalmanMuonCalibrator::KalmanMuonCalibrator(const std::string& filename) {
 
   random_ = new TRandom3(10101982);
 
+  edm::FileInPath ppath("KaMuCa/Calibration/data/precalib_"+filename+".root");
+  precalibFile_ = new TFile(ppath.fullPath().c_str());
+  precalibA_ = (TH1D*)precalibFile_->Get("A");
+  precalibB_ = (TH1D*)precalibFile_->Get("B");
+
 
   edm::FileInPath path("KaMuCa/Calibration/data/scale_"+filename+".root");
   scaleFile_ = new TFile(path.fullPath().c_str());
@@ -32,11 +37,14 @@ KalmanMuonCalibrator::KalmanMuonCalibrator(const std::string& filename) {
   eigenvectors_ = (TMatrixD*)scaleFile_->Get("eigenvectors");
 
 
-  TH1D * etaH = (TH1D*)scaleFile_->Get("A11");
+  TH1D * etaH = (TH1D*)scaleFile_->Get("B");
   nEtaBins_ = etaH->GetNbinsX();
   etaAxis_ = etaH->GetXaxis(); 
-  TH1D* etaMH =(TH1D*)scaleFile_->Get("e1");   
-  nMaterialEtaBins_ = etaMH->GetNbinsX();
+  nPhiBins_ = etaH->GetNbinsY();
+  phiAxis_ = etaH->GetYaxis(); 
+
+  TH1D* etaMH =(TH1D*)scaleFile_->Get("e");   
+  nEtaMaterialBins_ = etaMH->GetNbinsX();
   etaMaterialAxis_ = etaMH->GetXaxis(); 
 
   edm::FileInPath path1("KaMuCa/Calibration/data/bFieldMap.root");
@@ -64,49 +72,70 @@ KalmanMuonCalibrator::~KalmanMuonCalibrator() {
   magneticFile_->Close();
 }
 
-unsigned int KalmanMuonCalibrator::getBin(Measurement histo,float eta) {
+
+unsigned int KalmanMuonCalibrator::getBin(Measurement histo,float eta,float phi) {
   switch(histo) {
   case A:
-    return etaAxis_->FindBin(eta)-1;
-  case A11:
-    return nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case A12:
-    return 2*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case A21:
-    return 3*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case A22:
-    return 4*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case A31:
-    return 5*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case A32:
-    return 6*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B0:
-    return 7*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B11:
-    return 8*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B12:
-    return 9*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B21:
-    return 10*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B22:
-    return 11*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B31:
-    return 12*nEtaBins_+etaAxis_->FindBin(eta)-1;
-  case B32:
-    return 13*nEtaBins_+etaAxis_->FindBin(eta)-1;
+    return 0;
+  case K:
+    return 1;
+  case L:
+    return 2+etaAxis_->FindBin(eta)-1;
   case e:
-    return 14*nEtaBins_+etaMaterialAxis_->FindBin(eta)-1;
-  case e2:
-    return 14*nEtaBins_+nMaterialEtaBins_+etaMaterialAxis_->FindBin(eta)-1;
-  default:
-    return -1;
+    return 2+nEtaBins_+etaMaterialAxis_->FindBin(eta)-1;
+  case B:
+    return 2+nEtaBins_+nEtaMaterialBins_+etaAxis_->FindBin(eta)+nEtaBins_*(phiAxis_->FindBin(phi)-1)-1;
   }
   return -1;
 }
 
 
-double KalmanMuonCalibrator::getData(Measurement histo,float eta) {
-  unsigned int bin = getBin(histo,eta);
+
+
+// unsigned int KalmanMuonCalibrator::getBin(Measurement histo,float eta) {
+//   switch(histo) {
+//   case A:
+//     return etaAxis_->FindBin(eta);
+//   case A11:
+//     return nEtaBins_+etaAxis_->FindBin(eta);
+//   case A12:
+//     return 2*nEtaBins_+etaAxis_->FindBin(eta);
+//   case A21:
+//     return 3*nEtaBins_+etaAxis_->FindBin(eta);
+//   case A22:
+//     return 4*nEtaBins_+etaAxis_->FindBin(eta);
+//   case A31:
+//     return 5*nEtaBins_+etaAxis_->FindBin(eta);
+//   case A32:
+//     return 6*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B0:
+//     return 7*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B11:
+//     return 8*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B12:
+//     return 9*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B21:
+//     return 10*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B22:
+//     return 11*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B31:
+//     return 12*nEtaBins_+etaAxis_->FindBin(eta);
+//   case B32:
+//     return 13*nEtaBins_+etaAxis_->FindBin(eta);
+//   case e:
+//     return 14*nEtaBins_+etaMaterialAxis_->FindBin(eta);
+//   case e2:
+//     return 14*nEtaBins_+nMaterialEtaBins_+etaMaterialAxis_->FindBin(eta);
+//   default:
+//     return -1;
+//   }
+//   return -1;
+// }
+
+
+
+double KalmanMuonCalibrator::getData(Measurement histo,float eta,float phi) {
+  unsigned int bin = getBin(histo,eta,phi);
   return shifted_calib_->GetBinContent(bin+1);
 }
 
@@ -118,35 +147,42 @@ double KalmanMuonCalibrator::closure(double pt,double eta) {
 
 
 double KalmanMuonCalibrator::getCorrectedPt(double pt,double eta1,double phi1,int charge) {
-  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
-  double a_1 = getData(A,eta1);
-  double a11_1 = getData(A11,eta1);
-  double a12_1 = getData(A12,eta1);
-  double a21_1 = getData(A21,eta1);
-  double a22_1 = getData(A22,eta1);
-  double a31_1 = getData(A31,eta1);
-  double a32_1 = getData(A32,eta1);
-  double b0_1 = getData(B0,eta1);
-  double b11_1 = getData(B11,eta1);
-  double b12_1 = getData(B12,eta1);
-  double b21_1 = getData(B21,eta1);
-  double b22_1 = getData(B22,eta1);
-  double b31_1 = getData(B31,eta1);
-  double b32_1 = getData(B32,eta1);
-  double e_1 = getData(e,eta1);
-  double e2_1 = getData(e2,eta1);
+  double curvature = 1.0/getPreCorrectedPt(pt,eta1,phi1,charge);
+  //  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
+
+  double a_1 = getData(A,eta1,phi1);
+  double k_1 = getData(K,eta1,phi1);
+  double l_1 = getData(L,eta1,phi1);
+  double b0_1 = getData(B,eta1,phi1);
+  double e_1 = getData(e,eta1,phi1);
   double st1 =sin(2*atan(exp(-eta1))); 
-  double tt1 =tan(2*atan(exp(-eta1))); 
+  //  double tt1 =tan(2*atan(exp(-eta1))); 
 
 
-  double magnetic = a_1;
-  double scaleTracker = a11_1*sin(phi1)+ a12_1*cos(phi1)+a21_1*sin(2*phi1)+ a22_1*cos(2*phi1)+a31_1*sin(3*phi1)+ a32_1*cos(3*phi1); 
-  double material= -e_1*st1*curvature-e2_1*st1*curvature*curvature*curvature;
-  double alignment = b0_1+b11_1*sin(phi1)+ b12_1*cos(phi1)+b21_1*sin(2*phi1)+ b22_1*cos(2*phi1)+b31_1*sin(3*phi1)+ b32_1*cos(3*phi1);
-  curvature = (magnetic+scaleTracker+material)*curvature+charge*alignment; 
-  
-    return (1.0/curvature)*(1.0+varyClosure_*closure(pt,eta1));
+  double magnetic = a_1+k_1*eta1*eta1;
+  double material= -e_1*st1*curvature;
+
+  double alignment=charge*b0_1+l_1;
+  curvature = (magnetic+material)*curvature+alignment;
+  return (1.0/curvature)*(1.0+varyClosure_*closure(pt,eta1));
 }
+
+
+
+double KalmanMuonCalibrator::getPreCorrectedPt(double pt,double eta1,double phi1,int charge) {
+  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
+  ///precalibration-> B is minus sign since we measure Delta C - DeltaGenC
+  //  curvature=curvature*(precalibA_->GetBinContent(precalibA_->GetXaxis()->FindBin(eta1))  )-charge*(precalibB_->GetBinContent(precalibB_->GetBin(precalibB_->GetXaxis()->FindBin(eta1),precalibB_->GetYaxis()->FindBin(phi1))));
+  curvature=curvature-charge*(precalibB_->GetBinContent(precalibB_->GetBin(precalibB_->GetXaxis()->FindBin(eta1),precalibB_->GetYaxis()->FindBin(phi1))));
+
+  return (1.0/curvature);
+}
+
+
+
+
+
+
 double KalmanMuonCalibrator::getCorrectedPtMag(double pt,double eta,double phi) {
 
 

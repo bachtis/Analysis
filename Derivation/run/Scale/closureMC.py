@@ -15,7 +15,7 @@ Era='13TEV_Rereco'
 
 
 processor_JPSI_MC = ROOT.NtupleProcessor("JPsiMCClosure.root",0,3.095,0.0,0.0,"MC_Moriond17_13TeV",1);
-processor_JPSI_MC.processTree("/scratch3/Kalman/data/{era}/JPsiMC.root".format(era=Era),"pt1>5.0&&pt2>5.0&&abs(eta1)<2.4&&abs(eta2)<2.4&&gc1>0&&gc2>0&&mass>2.895&&mass<3.295")
+processor_JPSI_MC.processTree("/scratch3/Kalman/data/{era}/JPsiMC.root".format(era=Era),"pt1>3.5&&pt2>3.5&&abs(eta1)<2.4&&abs(eta2)<2.4&&gc1>0&&gc2>0&&mass>2.895&&mass<3.295")
 processor_JPSI_MC.close()
 
 #processor_JPSI_MC = ROOT.NtupleProcessor("JPsiMCInput2.root",0,1.0,0.0,0.0,"MC_Moriond17_13TeV",1);
@@ -27,8 +27,12 @@ processor_JPSI_MC.close()
 #processor_Z_MC.close()
 
 processor_Z_MC = ROOT.NtupleProcessor("ZMCClosure.root",0,1.0,0.0,0.0,"MC_Moriond17_13TeV",1);
-processor_Z_MC.processTree("/scratch3/Kalman/data/{era}/ZJETSMC.root".format(era=Era),"pt1>10.0&&pt2>10.0&&abs(eta1)<2.4&&abs(eta2)<2.4&&gc1>0&&gc2>0")
+processor_Z_MC.processTree("/scratch3/Kalman/data/{era}/ZMC.root".format(era=Era),"pt1>20.0&&pt2>20.0&&abs(eta1)<2.4&&abs(eta2)<2.4&&gc1>0&&gc2>0")
 processor_Z_MC.close()
+
+#processor_Z_MC = ROOT.NtupleProcessor("ZMCBefore.root",0,1.0,0.0,0.0,"MC_Moriond17_13TeV",0);
+#processor_Z_MC.processTree("/scratch3/Kalman/data/{era}/ZMC.root".format(era=Era),"pt1>20.0&&pt2>20.0&&abs(eta1)<2.4&&abs(eta2)<2.4&&gc1>0&&gc2>0")
+#processor_Z_MC.close()
 
 
 
