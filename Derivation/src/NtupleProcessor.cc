@@ -109,11 +109,6 @@ void NtupleProcessor::processTree(const std::string&fileName,const std::string& 
       pt1 = calib_->getCorrectedPt(pt1,eta1,phi1,1);
       pt2 = calib_->getCorrectedPt(pt2,eta2,phi2,-1);
     }
-    else if (fullCalib_==3) {
-      pt1 = calib_->getPreCorrectedPt(pt1,eta1,phi1,1);
-      pt2 = calib_->getPreCorrectedPt(pt2,eta2,phi2,-1);
-    }
-
     else {
       pt1 = calib_->getCorrectedPtMag(pt1,eta1,phi1);
       pt2 = calib_->getCorrectedPtMag(pt2,eta2,phi2);

@@ -105,10 +105,6 @@ void DataSetMaker::processTree(const std::string&fileName,const std::string& cut
       pt1 = calib_->getCorrectedPtMag(pt1,eta1,phi1);
       pt2 = calib_->getCorrectedPtMag(pt2,eta2,phi2);
     }
-    if (doCalib_==3) {
-      pt1 = calib_->getPreCorrectedPt(pt1,eta1,phi1,1);
-      pt2 = calib_->getPreCorrectedPt(pt2,eta2,phi2,-1);
-    }
 
     c1=1.0/pt1;
     c2=1.0/pt2;

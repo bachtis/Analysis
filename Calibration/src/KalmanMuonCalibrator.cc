@@ -8,12 +8,6 @@ KalmanMuonCalibrator::KalmanMuonCalibrator(const std::string& filename) {
 
   random_ = new TRandom3(10101982);
 
-  edm::FileInPath ppath("KaMuCa/Calibration/data/precalib_"+filename+".root");
-  precalibFile_ = new TFile(ppath.fullPath().c_str());
-  precalibA_ = (TH1D*)precalibFile_->Get("A");
-  precalibB_ = (TH1D*)precalibFile_->Get("B");
-
-
   edm::FileInPath path("KaMuCa/Calibration/data/scale_"+filename+".root");
   scaleFile_ = new TFile(path.fullPath().c_str());
   isData_ = (filename.find("DATA")!=std::string::npos);
@@ -147,8 +141,7 @@ double KalmanMuonCalibrator::closure(double pt,double eta) {
 
 
 double KalmanMuonCalibrator::getCorrectedPt(double pt,double eta1,double phi1,int charge) {
-  double curvature = 1.0/getPreCorrectedPt(pt,eta1,phi1,charge);
-  //  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
+  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
 
   double a_1 = getData(A,eta1,phi1);
   double k_1 = getData(K,eta1,phi1);
@@ -167,16 +160,6 @@ double KalmanMuonCalibrator::getCorrectedPt(double pt,double eta1,double phi1,in
   return (1.0/curvature)*(1.0+varyClosure_*closure(pt,eta1));
 }
 
-
-
-double KalmanMuonCalibrator::getPreCorrectedPt(double pt,double eta1,double phi1,int charge) {
-  double curvature = 1.0/getCorrectedPtMag(pt,eta1,phi1);
-  ///precalibration-> B is minus sign since we measure Delta C - DeltaGenC
-  //  curvature=curvature*(precalibA_->GetBinContent(precalibA_->GetXaxis()->FindBin(eta1))  )-charge*(precalibB_->GetBinContent(precalibB_->GetBin(precalibB_->GetXaxis()->FindBin(eta1),precalibB_->GetYaxis()->FindBin(phi1))));
-  curvature=curvature-charge*(precalibB_->GetBinContent(precalibB_->GetBin(precalibB_->GetXaxis()->FindBin(eta1),precalibB_->GetYaxis()->FindBin(phi1))));
-
-  return (1.0/curvature);
-}
 
 
 

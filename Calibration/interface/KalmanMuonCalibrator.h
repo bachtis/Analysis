@@ -12,7 +12,6 @@ class KalmanMuonCalibrator {
   KalmanMuonCalibrator();
   KalmanMuonCalibrator(const std::string&);
   double getCorrectedPt(double pt,double eta,double phi,int charge);
-  double getPreCorrectedPt(double pt,double eta,double phi,int charge);
   double smear(double pt,double eta);
   double smearForSync(double pt,double eta);
   double getCorrectedPtMag(double,double,double);
@@ -44,9 +43,6 @@ class KalmanMuonCalibrator {
   bool isData_;
   TFile *scaleFile_;
   TFile *precalibFile_;
-  TH1D* precalibA_;
-  TH1D* precalibB_;
-
   TFile *magneticFile_;
   TFile *resolutionFile_;
 
