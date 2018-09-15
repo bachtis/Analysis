@@ -1,0 +1,8 @@
+Three steps:
+1. Run the jobs in P{rocessing test to make ntuples
+2.Then got Derivation/run/Scale to modify and run prepare samples to preseloect events for the calibration
+3. Then go to src under Scale and do make (This is standalone C since I have a way to run it on GPU as well )
+   then run for  ./calibrate  ../file.root 
+   thne you get the calibration.root that can be moved to Derivation/data for people to use 
+4. Then you get the closure after calibrating the muons with The Derivation software 
+\
