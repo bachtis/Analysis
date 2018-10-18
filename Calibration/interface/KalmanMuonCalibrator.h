@@ -1,3 +1,6 @@
+#ifndef KalmanMuonCalibrator_h
+#define KalmanMuonCalibrator_h
+
 #include "TFile.h"
 #include "TH3F.h"
 #include "TH2F.h"
@@ -77,3 +80,5 @@ class KalmanMuonCalibrator {
 
 
 };
+
+#endif // #define KalmanMuonCalibrator_h
