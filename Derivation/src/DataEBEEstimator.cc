@@ -91,7 +91,7 @@ void DataEBEEstimator::processTree(const std::string&fileName,const std::string&
   float x=0.0;
 
 
-  TRandom *random = new TRandom(10101982);
+  // TRandom *random = new TRandom(10101982);
 
   for (int i=0;i<entries;++i) {
     reduced->GetEntry(i);
@@ -144,7 +144,7 @@ void DataEBEEstimator::processTree(const std::string&fileName,const std::string&
       x=genMass;
 
 
-      histoMap_[bin2]->Fill(x);
+    histoMap_[bin2]->Fill(x);
 
     if (i % 1000000==0)
 	printf("Processed %d \%d entries\n",i,entries);
