@@ -62,7 +62,7 @@ Double_t RooGaussianSumPdfWithSigma::evaluate() const
     //protection!
     if (error<=0.0)
       continue;
-      error=sqrt(error);
+    error=sqrt(error);
     arg = (mass-scale*masses[i])/(error);
     sum=sum+weights[i]*exp(-0.5*arg*arg)/(rootPiTimes2*error);
     sumw=sumw+weights[i];
